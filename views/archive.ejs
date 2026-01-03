@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arşiv - <%= username %>
+  </title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+
+<body>
+  <div class="app-container">
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h2>İcra Takip</h2>
+        <p>
+          <%= username %>
+        </p>
+      </div>
+
+      <nav class="sidebar-menu">
+        <a href="/dashboard" class="menu-item">
+          <span class="menu-item-icon">📊</span>
+          <span>Ana Panel</span>
+        </a>
+        <a href="/all-tasks" class="menu-item">
+          <span class="menu-item-icon">📋</span>
+          <span>Tüm Görevler</span>
+        </a>
+        <a href="/tebligatlar" class="menu-item">
+          <span class="menu-item-icon">📝</span>
+          <span>Tebligatlar</span>
+        </a>
+        <a href="/archive" class="menu-item active">
+          <span class="menu-item-icon">📦</span>
+          <span>Arşiv</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <form method="GET" action="/logout">
+          <button type="submit" class="logout-btn">Çıkış Yap</button>
+        </form>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="content-header">
+        <h1>Arşiv</h1>
+        <p class="breadcrumb">Tamamlanan ve onaylanan görevler</p>
+      </div>
+
+      <!-- İstatistikler -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon purple">📦</div>
+          <div class="stat-info">
+            <h3>
+              <%= tasks ? tasks.length : 0 %>
+            </h3>
+            <p>Toplam Arşivlenen</p>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon green">✅</div>
+          <div class="stat-info">
+            <h3>
+              <%= tasks ? tasks.filter(t=> t.oncelik !== 'acil').length : 0 %>
+            </h3>
+            <p>Rutin Görevler</p>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon orange">🔥</div>
+          <div class="stat-info">
+            <h3>
+              <%= tasks ? tasks.filter(t=> t.oncelik === 'acil').length : 0 %>
+            </h3>
+            <p>Acil Görevler</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="section active">
+        <% if (tasks && tasks.length> 0) { %>
+          <div class="table-container">
+            <table class="modern-table">
+              <thead>
+                <tr>
+                  <th>Öncelik</th>
+                  <th>İşlem Türü</th>
+                  <th>Adliye</th>
+                  <th>Müvekkil</th>
+                  <th>Portföy</th>
+                  <th>İcra Dairesi</th>
+                  <th>Esas No</th>
+                  <th>Borçlu</th>
+                  <th>Durum</th>
+                  <th>Oluşturulma</th>
+                  <th>Arşivlenme</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% tasks.forEach(task=> { %>
+                  <tr class="<%= task.oncelik === 'acil' ? 'urgent-row' : '' %>">
+                    <td>
+                      <span class="badge <%= task.oncelik === 'acil' ? 'badge-urgent' : 'badge-normal' %>">
+                        <%= task.oncelik==='acil' ? '🔥' : '📋' %>
+                      </span>
+                    </td>
+                    <td><strong>
+                        <%= task.islem_turu || 'Görev' %>
+                      </strong></td>
+                    <td>
+                      <%= task.adliye || '-' %>
+                    </td>
+                    <td>
+                      <%= task.muvekkil || '-' %>
+                    </td>
+                    <td>
+                      <%= task.portfoy || '-' %>
+                    </td>
+                    <td>
+                      <%= task.icra_dairesi || '-' %>
+                    </td>
+                    <td>
+                      <%= task.icra_esas_no || '-' %>
+                    </td>
+                    <td>
+                      <%= task.borclu || '-' %>
+                    </td>
+                    <td>
+                      <span class="status-badge status-arsiv">✅ ARŞİV</span>
+                    </td>
+                    <td>
+                      <%= task.eklenme_tarihi || '-' %>
+                    </td>
+                    <td>
+                      <%= new Date(task.updated_at).toLocaleDateString('tr-TR') %>
+                    </td>
+                  </tr>
+                  <% }) %>
+              </tbody>
+            </table>
+          </div>
+          <% } else { %>
+            <div class="empty-state">
+              <div class="empty-state-icon">📦</div>
+              <p>Arşivlenmiş görev bulunmuyor</p>
+            </div>
+            <% } %>
+      </div>
+    </main>
+  </div>
+</body>
+
+</html>

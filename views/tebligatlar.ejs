@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tebligatlar - <%= username %>
+    </title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>İcra Takip</h2>
+                <p>
+                    <%= username %> (<%= role %>)
+                </p>
+            </div>
+            <nav class="sidebar-menu">
+                <a href="/dashboard" class="menu-item">
+                    <span class="menu-item-icon">📊</span>
+                    <span>Ana Panel</span>
+                </a>
+                <a href="/all-tasks" class="menu-item">
+                    <span class="menu-item-icon">📋</span>
+                    <span>Tüm Görevler</span>
+                </a>
+                <a href="/tebligatlar" class="menu-item active">
+                    <span class="menu-item-icon">📝</span>
+                    <span>Tebligatlar</span>
+                </a>
+                <a href="/archive" class="menu-item">
+                    <span class="menu-item-icon">📦</span>
+                    <span>Arşiv</span>
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <form method="GET" action="/logout">
+                    <button type="submit" class="logout-btn">Çıkış Yap</button>
+                </form>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div class="content-header">
+                <h1>Tebligat Yönetimi</h1>
+                <p class="breadcrumb">Tebligat oluşturma ve takip işlemleri</p>
+            </div>
+
+            <!-- Tebligat Oluştur -->
+            <section id="tebligat-olustur" class="section active" style="margin-bottom: 2rem;">
+                <h2>Tebligat Oluştur</h2>
+                <form method="POST" action="/tebligat/create" class="task-form">
+                    <input type="text" name="muvekkil" placeholder="Müvekkil">
+                    <input type="text" name="portfoy" placeholder="Portföy">
+                    <input type="text" name="taraf" placeholder="Taraf">
+                    <input type="text" name="tckn_vkn" placeholder="TCKN / VKN">
+                    <input type="text" name="barkod" placeholder="Barkod No">
+                    <input type="text" name="dosya_no" placeholder="Dosya No *" required>
+                    <input type="text" name="icra_dairesi" placeholder="İcra Dairesi *" required>
+                    <select name="durum">
+                        <option value="itiraz">İtiraz</option>
+                        <option value="tebliğ">Tebliğ</option>
+                        <option value="iade">İade</option>
+                    </select>
+                    <input type="date" name="tarih" value="<%= new Date().toISOString().split('T')[0] %>">
+                    <textarea name="not" placeholder="Not"></textarea>
+                    <button type="submit">Oluştur</button>
+                </form>
+            </section>
+
+            <!-- Tebligat Listesi - Modern Tablo -->
+            <section id="tebligat-listesi" class="section active">
+                <h2>Tebligat Listesi</h2>
+                <% if (tebligatlar && tebligatlar.length) { %>
+                    <div class="modern-table-wrapper">
+                        <table class="modern-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Dosya No</th>
+                                    <th>İcra Dairesi</th>
+                                    <th>Müvekkil</th>
+                                    <th>Portföy</th>
+                                    <th>Taraf</th>
+                                    <th>TCKN/VKN</th>
+                                    <th>Barkod</th>
+                                    <th>Durum</th>
+                                    <th>Tarih</th>
+                                    <th>Not</th>
+                                    <% if (role==='yonetici' ) { %>
+                                        <th>İşlemler</th>
+                                        <% } %>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% tebligatlar.forEach(function(t){ %>
+                                    <tr>
+                                        <td><span class="id-badge">#<%= t.id %></span></td>
+                                        <td><strong>
+                                                <%= t.dosya_no || '-' %>
+                                            </strong></td>
+                                        <td>
+                                            <%= t.icra_dairesi || '-' %>
+                                        </td>
+                                        <td>
+                                            <%= t.muvekkil || '-' %>
+                                        </td>
+                                        <td>
+                                            <%= t.portfoy || '-' %>
+                                        </td>
+                                        <td>
+                                            <%= t.taraf || '-' %>
+                                        </td>
+                                        <td>
+                                            <%= t.tckn_vkn || '-' %>
+                                        </td>
+                                        <td>
+                                            <%= t.barkod || '-' %>
+                                        </td>
+                                        <td><span class="status-badge status-<%= t.durum %>">
+                                                <%= t.durum %>
+                                            </span></td>
+                                        <td>
+                                            <%= t.tarih %>
+                                        </td>
+                                        <td>
+                                            <%= t.notlar || '-' %>
+                                        </td>
+                                        <% if (role==='yonetici' ) { %>
+                                            <td>
+                                                <form method="POST" action="/tebligat/<%= t.id %>/update-status"
+                                                    style="display:flex; gap:0.5rem; align-items:center;">
+                                                    <select name="durum"
+                                                        style="padding:0.5rem; border-radius:6px; border:1px solid #e0e0e0;">
+                                                        <option value="itiraz" <%=t.durum==='itiraz' ? 'selected' : ''
+                                                            %>>İtiraz</option>
+                                                        <option value="tebliğ" <%=t.durum==='tebliğ' ? 'selected' : ''
+                                                            %>>Tebliğ</option>
+                                                        <option value="iade" <%=t.durum==='iade' ? 'selected' : '' %>
+                                                            >İade</option>
+                                                    </select>
+                                                    <button type="submit"
+                                                        style="padding:0.5rem 1rem; background:#667eea; color:white; border:none; border-radius:6px; cursor:pointer;">Güncelle</button>
+                                                </form>
+                                            </td>
+                                            <% } %>
+                                    </tr>
+                                    <% }) %>
+                            </tbody>
+                        </table>
+                    </div>
+                    <% } else { %>
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📚</div>
+                            <p>Tebligat bulunamadı</p>
+                        </div>
+                        <% } %>
+            </section>
+        </main>
+    </div>
+</body>
+
+</html>

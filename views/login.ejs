@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Giriş - Görev Yönetimi</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-box">
+      <h1>🎯 Görev Yönetimi</h1>
+      <p class="welcome-text">Çalışmak Bizim İlacımız.</p>
+      
+      <% if (error) { %>
+        <div class="error"><%= error %></div>
+      <% } %>
+      
+      <form method="POST" action="/login">
+        <input type="text" name="username" placeholder="👤 Kullanıcı Adı" required autofocus>
+        <input type="password" name="password" placeholder="🔒 Şifre" required>
+        <button type="submit">Giriş Yap</button>
+      </form>
+      
+      <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #e0e0e0;">
+        <p style="color: #999; font-size: 0.9rem; text-align: center; margin-bottom: 1rem;">
+          <strong>Test Kullanıcıları</strong>
+        </p>
+        <div style="display: grid; gap: 0.5rem; font-size: 0.85rem; color: #666;">
+          <div style="background: #f8f9fa; padding: 0.5rem; border-radius: 6px;">
+            <strong>Atayan:</strong> atayan1 / 123456
+          </div>
+          <div style="background: #f8f9fa; padding: 0.5rem; border-radius: 6px;">
+            <strong>Yönetici:</strong> yonetici1 / 123456
+          </div>
+          <div style="background: #f8f9fa; padding: 0.5rem; border-radius: 6px;">
+            <strong>Atanan:</strong> atanan1, atanan2 / 123456
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

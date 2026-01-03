@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tüm Görevler - <%= username %>
+  </title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+
+<body>
+  <div class="app-container">
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h2>İcra Takip</h2>
+        <p>
+          <%= username %> (<%= role %>)
+        </p>
+      </div>
+      <nav class="sidebar-menu">
+        <a href="/dashboard" class="menu-item">
+          <span class="menu-item-icon">📊</span>
+          <span>Ana Panel</span>
+        </a>
+        <a href="/all-tasks" class="menu-item active">
+          <span class="menu-item-icon">📋</span>
+          <span>Tüm Görevler</span>
+        </a>
+        <a href="/tebligatlar" class="menu-item">
+          <span class="menu-item-icon">📝</span>
+          <span>Tebligatlar</span>
+        </a>
+        <a href="/archive" class="menu-item">
+          <span class="menu-item-icon">📦</span>
+          <span>Arşiv</span>
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <form method="GET" action="/logout">
+          <button type="submit" class="logout-btn">Çıkış Yap</button>
+        </form>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="content-header">
+        <h1>Tüm Görevler</h1>
+        <p class="breadcrumb">Sistemdeki tüm aktif görevler</p>
+      </div>
+
+      <!-- Filtre -->
+      <div
+        style="margin-bottom: 1.5rem; display: flex; gap: 1rem; flex-wrap: wrap; background: white; padding: 1rem; border-radius: 10px;">
+        <input type="text" id="searchInput" placeholder="🔍 Ara (İşlem türü, borçlu, icra dairesi...)"
+          style="flex: 1; min-width: 250px; padding: 0.75rem; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 0.95rem;">
+        <select id="statusFilter"
+          style="padding: 0.75rem; border: 2px solid #e0e0e0; border-radius: 8px; min-width: 150px;">
+          <option value="">Tüm Durumlar</option>
+          <option value="tamamlanmadi">Tamamlanmadı</option>
+          <option value="kontrol_ediliyor">Kontrol Ediliyor</option>
+          <option value="son_onay_bekliyor">Son Onay Bekliyor</option>
+          <option value="iade">İade</option>
+        </select>
+        <select id="priorityFilter"
+          style="padding: 0.75rem; border: 2px solid #e0e0e0; border-radius: 8px; min-width: 120px;">
+          <option value="">Tüm Öncelikler</option>
+          <option value="acil">🔥 Acil</option>
+          <option value="rutin">📋 Rutin</option>
+        </select>
+      </div>
+
+      <% if (tasks && tasks.length> 0) { %>
+        <div class="table-container">
+          <table class="modern-table">
+            <thead>
+              <tr>
+                <th>Öncelik</th>
+                <th>İşlem Türü</th>
+                <th>Adliye</th>
+                <th>Müvekkil</th>
+                <th>Portföy</th>
+                <th>İcra Dairesi</th>
+                <th>Esas No</th>
+                <th>Borçlu</th>
+                <th>Atayan</th>
+                <th>Yönetici</th>
+                <th>Atanan</th>
+                <th>Durum</th>
+                <th>Tarih</th>
+              </tr>
+            </thead>
+            <tbody id="taskTableBody">
+              <% tasks.forEach(task=> {
+                const creator = users.find(u => u.id === task.creator_id);
+                const manager = users.find(u => u.id === task.manager_id);
+                const assignee = users.find(u => u.id === task.assignee_id);
+                %>
+                <tr data-status="<%= task.status %>" data-priority="<%= task.oncelik %>"
+                  class="<%= task.oncelik === 'acil' ? 'urgent-row' : '' %>">
+                  <td>
+                    <span class="badge <%= task.oncelik === 'acil' ? 'badge-urgent' : 'badge-normal' %>">
+                      <%= task.oncelik==='acil' ? '🔥' : '📋' %>
+                    </span>
+                  </td>
+                  <td><strong>
+                      <%= task.islem_turu || '-' %>
+                    </strong></td>
+                  <td>
+                    <%= task.adliye || '-' %>
+                  </td>
+                  <td>
+                    <%= task.muvekkil || '-' %>
+                  </td>
+                  <td>
+                    <%= task.portfoy || '-' %>
+                  </td>
+                  <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"
+                    title="<%= task.icra_dairesi %>">
+                    <%= task.icra_dairesi || '-' %>
+                  </td>
+                  <td>
+                    <%= task.icra_esas_no || '-' %>
+                  </td>
+                  <td>
+                    <%= task.borclu || '-' %>
+                  </td>
+                  <td>
+                    <%= creator ? creator.username : '-' %>
+                  </td>
+                  <td>
+                    <%= manager ? manager.username : '-' %>
+                  </td>
+                  <td>
+                    <%= assignee ? assignee.username : '-' %>
+                  </td>
+                  <td>
+                    <span class="status-badge status-<%= task.status %>">
+                      <%= task.status %>
+                    </span>
+                  </td>
+                  <td>
+                    <%= task.eklenme_tarihi || '-' %>
+                  </td>
+                </tr>
+                <% }) %>
+            </tbody>
+          </table>
+        </div>
+        <% } else { %>
+          <div class="empty-state">
+            <div class="empty-state-icon">📭</div>
+            <p>Görev bulunamadı</p>
+          </div>
+          <% } %>
+    </main>
+  </div>
+
+  <script>
+    const searchInput = document.getElementById('searchInput');
+    const statusFilter = document.getElementById('statusFilter');
+    const priorityFilter = document.getElementById('priorityFilter');
+    const tableBody = document.getElementById('taskTableBody');
+
+    function filterTable() {
+      const searchTerm = searchInput.value.toLowerCase();
+      const statusValue = statusFilter.value;
+      const priorityValue = priorityFilter.value;
+      const rows = tableBody.getElementsByTagName('tr');
+
+      for (let row of rows) {
+        const text = row.textContent.toLowerCase();
+        const status = row.getAttribute('data-status');
+        const priority = row.getAttribute('data-priority');
+
+        const matchSearch = text.includes(searchTerm);
+        const matchStatus = !statusValue || status === statusValue;
+        const matchPriority = !priorityValue || priority === priorityValue;
+
+        if (matchSearch && matchStatus && matchPriority) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      }
+    }
+
+    searchInput.addEventListener('input', filterTable);
+    statusFilter.addEventListener('change', filterTable);
+    priorityFilter.addEventListener('change', filterTable);
+  </script>
+</body>
+
+</html>
