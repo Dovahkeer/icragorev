@@ -23,10 +23,7 @@
           <span class="menu-item-icon">📋</span>
           <span>Görevler</span>
         </a>
-        <a href="/all-tasks" class="menu-item">
-          <span class="menu-item-icon">📊</span>
-          <span>Tüm Görevler</span>
-        </a>
+        
 
         <% if (role==='atayan' || role==='yonetici' ) { %>
           <a href="#" class="menu-item" onclick="showSection('yeni-gorev')">
@@ -36,10 +33,6 @@
           <a href="#" class="menu-item" onclick="showSection('excel-yukle')">
             <span class="menu-item-icon">📊</span>
             <span>Excel Yükle</span>
-          </a>
-          <a href="/tebligatlar" class="menu-item">
-            <span class="menu-item-icon">📝</span>
-            <span>Tebligatlar</span>
           </a>
           <% } %>
             <% if (role==='atayan' ) { %>
@@ -70,13 +63,14 @@
                     <span>Adliye Listesi</span>
                   </a>
                   <% } %>
-                    <a href="#" class="menu-item" onclick="showSection('tebligat-olustur')">
+                    <!-- Tebligatlar, Tüm Görevler ve Arşiv en alta taşındı -->
+                    <a href="/tebligatlar" class="menu-item">
                       <span class="menu-item-icon">📝</span>
-                      <span>Tebligat Oluştur</span>
+                      <span>Tebligatlar</span>
                     </a>
-                    <a href="#" class="menu-item" onclick="showSection('tebligat-listesi')">
-                      <span class="menu-item-icon">📚</span>
-                      <span>Tebligat Listesi</span>
+                    <a href="/all-tasks" class="menu-item">
+                      <span class="menu-item-icon">📊</span>
+                      <span>Tüm Görevler</span>
                     </a>
                     <a href="/archive" class="menu-item">
                       <span class="menu-item-icon">📦</span>
@@ -95,6 +89,32 @@
         <h1>Görev Yönetimi</h1>
         <p class="breadcrumb">Ana Sayfa / Görevler</p>
       </div>
+
+      <% if (role==='atayan' || role==='yonetici') { %>
+        <section id="dashboard-tebligat" class="section">
+          <h2>Tebligat Oluştur</h2>
+          <form method="POST" action="/tebligat/create" class="tebligat-form">
+            <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+              <input type="text" name="muvekkil" placeholder="Müvekkil">
+              <input type="text" name="portfoy" placeholder="Portföy">
+              <input type="text" name="taraf" placeholder="Taraf">
+              <input type="text" name="tckn_vkn" placeholder="TCKN/VKN">
+              <input type="text" name="barkod" placeholder="Barkod">
+              <input type="text" name="dosya_no" placeholder="Dosya No">
+              <input type="text" name="icra_dairesi" placeholder="İcra Dairesi">
+              <select name="durum">
+                <option value="itiraz">İtiraz</option>
+                <option value="teslim">Teslim</option>
+              </select>
+              <input type="date" name="tarih" value="<%= new Date().toISOString().split('T')[0] %>">
+              <textarea name="not" placeholder="Notlar" style="min-width:220px;"></textarea>
+            </div>
+            <div style="margin-top:0.5rem;">
+              <button type="submit">Tebligat Oluştur</button>
+            </div>
+          </form>
+        </section>
+      <% } %>
 
       <!-- İstatistikler -->
       <div class="stats-grid">
