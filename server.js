@@ -48,9 +48,25 @@ app.get('/', (req, res) => {
 });
 
 initDatabase().then(() => {
-  app.listen(PORT, () => {
-    console.log(`\n✓ Sunucu çalışıyor: http://localhost:${PORT}`);
-    console.log(`✓ Atayanlar (pit10): ozlemkoksal, serenaozyilmaz, topraksezgin`);
+  app.listen(PORT, '0.0.0.0', () => {
+    const os = require('os');
+    const networkInterfaces = os.networkInterfaces();
+    let localIP = 'localhost';
+    
+    // Find local IP address
+    for (const interfaceName in networkInterfaces) {
+      for (const iface of networkInterfaces[interfaceName]) {
+        if (iface.family === 'IPv4' && !iface.internal) {
+          localIP = iface.address;
+          break;
+        }
+      }
+    }
+    
+    console.log(`\n✓ Sunucu çalışıyor!`);
+    console.log(`  - Yerel erişim: http://localhost:${PORT}`);
+    console.log(`  - Ağ erişimi: http://${localIP}:${PORT}`);
+    console.log(`\n✓ Atayanlar (pit10): ozlemkoksal, serenaozyilmaz, topraksezgin`);
     console.log(`✓ Yöneticiler (123456): ilaydaerdogan, ozgeaslan`);
     console.log(`✓ Atananlar (123456): omercanoruc, melissaozturk, ademcanozkan, nisanurakyildiz, sevvalaslanboga, cansubozbek\n`);
   });

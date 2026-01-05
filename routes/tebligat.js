@@ -51,4 +51,15 @@ router.post('/tebligat/:id/update-status', requireRole('yonetici'), async (req, 
   }
 });
 
+router.post('/tebligat/:id/delete', requireRole('yonetici'), async (req, res) => {
+  try {
+    const id = req.params.id;
+    await db('tebligatlar').where({ id }).del();
+    return res.redirect('/tebligatlar');
+  } catch (err) {
+    console.error('Tebligat silme hatası:', err);
+    res.status(500).send('Silinemedi');
+  }
+});
+
 module.exports = router;

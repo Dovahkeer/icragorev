@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="tr">
 
 <head>
@@ -102,11 +102,6 @@
               <input type="text" name="barkod" placeholder="Barkod">
               <input type="text" name="dosya_no" placeholder="Dosya No">
               <input type="text" name="icra_dairesi" placeholder="İcra Dairesi">
-              <select name="durum">
-                <option value="itiraz">İtiraz</option>
-                <option value="teslim">Teslim</option>
-              </select>
-              <input type="date" name="tarih" value="<%= new Date().toISOString().split('T')[0] %>">
               <textarea name="not" placeholder="Notlar" style="min-width:220px;"></textarea>
             </div>
             <div style="margin-top:0.5rem;">
@@ -279,9 +274,12 @@
                 <p><strong>Dosya No:</strong>
                   <%= task.icra_esas_no || '-' %>
                 </p>
-                <% if (task.borclu) { %>
+                <% if (task.borclu || task.borclu_tckn_vkn) { %>
                   <p><strong>Borçlu:</strong>
-                    <%= task.borclu %>
+                    <%= task.borclu || '-' %>
+                    <% if (task.borclu_tckn_vkn) { %>
+                      | <strong>TCKN:</strong> <%= task.borclu_tckn_vkn %>
+                    <% } %>
                   </p>
                   <% } %>
                     <% if (task.islem_aciklamasi) { %>
@@ -567,9 +565,12 @@
                         <p><strong>Dosya No:</strong>
                           <%= task.icra_esas_no || '-' %>
                         </p>
-                        <% if (task.borclu) { %>
+                        <% if (task.borclu || task.borclu_tckn_vkn) { %>
                           <p><strong>Borçlu:</strong>
-                            <%= task.borclu %>
+                            <%= task.borclu || '-' %>
+                            <% if (task.borclu_tckn_vkn) { %>
+                              | <strong>TCKN:</strong> <%= task.borclu_tckn_vkn %>
+                            <% } %>
                           </p>
                           <% } %>
                             <p><strong>Açıklama:</strong>
@@ -667,11 +668,7 @@
                             <p><strong>Dosya No:</strong>
                               <%= task.icra_esas_no || '-' %>
                             </p>
-                            <% if (task.borclu) { %>
-                              <p><strong>Borçlu:</strong>
-                                <%= task.borclu %>
-                              </p>
-                              <% } %>
+                            <% if (task.borclu || task.borclu_tckn_vkn) { %>`n                  <p><strong>Borçlu:</strong>`n                    <%= task.borclu || '-' %>`n                    <% if (task.borclu_tckn_vkn) { %>`n                      | <strong>TCKN:</strong> <%= task.borclu_tckn_vkn %>`n                    <% } %>`n                  </p>`n                  <% } %>
                                 <p><strong>Açıklama:</strong>
                                   <%= task.islem_aciklamasi %>
                                 </p>
@@ -889,21 +886,23 @@
                             <div class="note-panel" id="notes-kontrol-<%= task.id %>"
                               style="display:none; margin-top:0.5rem;">
                               <div class="notes-list">
-                                <% ((historiesByTask && historiesByTask[task.id]) || []).filter(function(h){ return
-                                  h.action==='note' ; }).forEach(function(h){ %>
-                                  <div class="note-item">
-                                    <div class="note-meta"><strong>
-                                        <%= users.find(function(u){ return u.id===h.user_id; })?.username || 'Anonim' %>
-                                      </strong> · <small>
-                                        <%= new Date(h.created_at).toLocaleString('tr-TR') %>
-                                      </small></div>
-                                    <div class="note-body">
-                                      <%= h.details %>
+                                <% if (historiesByTask && historiesByTask[task.id]) { %>
+                                  <% historiesByTask[task.id].filter(h => h.action === 'note').forEach(function(h){ %>
+                                    <div class="note-item">
+                                      <div class="note-meta"><strong>
+                                          <%= users.find(function(u){ return u.id===h.user_id; })?.username || 'Anonim' %>
+                                        </strong> · <small>
+                                          <%= new Date(h.created_at).toLocaleString('tr-TR') %>
+                                        </small></div>
+                                      <div class="note-body">
+                                        <%= h.details %>
+                                      </div>
                                     </div>
-                                  </div>
-                                  <% }) %>
+                                  <% }); %>
+                                <% } %>
                               </div>
                               <form method="POST" action="/tasks/<%= task.id %>/note" class="note-form">
+                                <input type="hidden" name="returnTo" value="kontrol">
                                 <textarea name="note" placeholder="Not ekleyin..." required></textarea>
                                 <button type="submit" class="btn btn-primary" style="margin-top:0.5rem;">Ekle</button>
                               </form>
@@ -944,11 +943,7 @@
                             <p><strong>Dosya No:</strong>
                               <%= task.icra_esas_no || '-' %>
                             </p>
-                            <% if (task.borclu) { %>
-                              <p><strong>Borçlu:</strong>
-                                <%= task.borclu %>
-                              </p>
-                              <% } %>
+                            <% if (task.borclu || task.borclu_tckn_vkn) { %>`n                  <p><strong>Borçlu:</strong>`n                    <%= task.borclu || '-' %>`n                    <% if (task.borclu_tckn_vkn) { %>`n                      | <strong>TCKN:</strong> <%= task.borclu_tckn_vkn %>`n                    <% } %>`n                  </p>`n                  <% } %>
                                 <p><strong>Açıklama:</strong>
                                   <%= task.islem_aciklamasi %>
                                 </p>
@@ -1047,12 +1042,22 @@
       }
     }
     function toggleNotes(id, section) {
+      console.log('toggleNotes çağrıldı:', { id, section });
       let el;
       if (section) el = document.getElementById('notes-' + section + '-' + id);
       if (!el) el = document.getElementById('notes-' + id); // fallback for older IDs
-      if (!el) return;
-      if (el.style.display === 'none' || el.style.display === '') el.style.display = 'block';
-      else el.style.display = 'none';
+      console.log('Element bulundu:', el);
+      if (!el) {
+        console.error('Not paneli bulunamadı! ID:', 'notes-' + section + '-' + id);
+        return;
+      }
+      if (el.style.display === 'none' || el.style.display === '') {
+        el.style.display = 'block';
+        console.log('Not paneli açıldı');
+      } else {
+        el.style.display = 'none';
+        console.log('Not paneli kapatıldı');
+      }
     }
     function showAdliye(name) {
       document.querySelectorAll('.adliye-panel').forEach(p => p.style.display = 'none');

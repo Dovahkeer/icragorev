@@ -96,6 +96,7 @@
                   <th>İcra Dairesi</th>
                   <th>Esas No</th>
                   <th>Borçlu</th>
+                  <th>TCKN</th>
                   <th>Durum</th>
                   <th>Oluşturulma</th>
                   <th>Arşivlenme</th>
@@ -129,6 +130,9 @@
                     </td>
                     <td>
                       <%= task.borclu || '-' %>
+                    </td>
+                    <td>
+                      <%= task.borclu_tckn_vkn || '-' %>
                     </td>
                     <td>
                       <span class="status-badge status-arsiv">✅ ARŞİV</span>

@@ -3,47 +3,11 @@ const multer = require('multer');
 const xlsx = require('xlsx');
 const { db } = require('../config/database');
 const { requireAuth, requireRole } = require('../middleware/auth');
+const { computeAdliye } = require('../helpers/adliye');
 
 const upload = multer({ dest: 'tmp/' });
 
 const router = express.Router();
-
-// helper: normalize strings for robust matching (lowercase, remove diacritics)
-const normalizeText = (s) => {
-  if (!s && s !== 0) return '';
-  // normalize unicode (separate combined letters), lowercase, then strip combining marks
-  let str = String(s).normalize('NFKD').toLowerCase();
-  // remove diacritic combining marks
-  str = str.replace(/\p{M}/gu, '');
-  // map common Turkish characters to ascii equivalents
-  const map = { 'ç': 'c', 'ğ': 'g', 'ı': 'i', 'ö': 'o', 'ş': 's', 'ü': 'u', 'İ': 'i' };
-  str = str.replace(/[çğıöşüİ]/g, ch => map[ch] || ch);
-  // remove any remaining non-alphanum (keep ascii letters and digits and spaces)
-  str = str.replace(/[^a-z0-9\s]/g, ' ');
-  // collapse spaces
-  str = str.replace(/\s+/g, ' ').trim();
-  return str;
-};
-
-// centralize adliye computation so both manual create and upload use same logic
-const computeAdliye = (icra_dairesi) => {
-  if (!icra_dairesi || !icra_dairesi.trim()) return '';
-
-  const d = icra_dairesi
-    .toLowerCase()
-    .replace(/ı/g, 'i')
-    .replace(/İ/g, 'i');
-
-  if (d.includes('istanbul anadolu')) return 'ANADOLU';
-  if (d.includes('istanbul')) return 'ÇAĞLAYAN';
-  if (d.includes('izmir')) return 'İZMİR';
-  if (d.includes('Ankara')) return 'ANKARA';
-  if (d.includes('Adana')) return 'ADANA';
-  if (d.includes('Antalya')) return 'ANTALYA';
-  if (d.includes('Bakırköy')) return 'BAKIRKÖY';
-
-  return 'DİĞER';
-};
 
 router.get('/dashboard', requireAuth, async (req, res) => {
   const role = req.session.userRole;
@@ -165,6 +129,7 @@ router.get('/dashboard', requireAuth, async (req, res) => {
       (tasks.forControl || []).forEach(t => taskIds.push(t.id));
       (tasks.forFinalApproval || []).forEach(t => taskIds.push(t.id));
       (tasks.myAssignedTasks || []).forEach(t => taskIds.push(t.id));
+      console.log('📊 Yönetici taskIds:', taskIds);
     } else if (role === 'atanan') {
       (tasks || []).forEach(t => taskIds.push(t.id));
     }
@@ -172,10 +137,13 @@ router.get('/dashboard', requireAuth, async (req, res) => {
     let historiesByTask = {};
     if (taskIds.length) {
       const histories = await db('task_history').whereIn('task_id', taskIds).orderBy('created_at', 'desc').select('*');
+      console.log(`📝 ${histories.length} history kaydı yüklendi`);
       histories.forEach(h => {
-        historiesByTask[h.task_id] = historiesByTask[h.task_id] || [];
-        historiesByTask[h.task_id].push(h);
+        const taskId = parseInt(h.task_id); // Number olarak sakla
+        historiesByTask[taskId] = historiesByTask[taskId] || [];
+        historiesByTask[taskId].push(h);
       });
+      console.log('📊 historiesByTask keys:', Object.keys(historiesByTask));
     }
 
     // determine active section: prefer session-stored value (set after actions), then query param
@@ -209,7 +177,11 @@ router.post('/tasks/create', requireRole('atayan', 'yonetici'), async (req, res)
   } = req.body;
 
   try {
+    console.log('📝 Yeni görev oluşturuluyor...');
+    console.log('İcra Dairesi:', icra_dairesi);
+    
     const adliye = computeAdliye(icra_dairesi);
+    console.log('Hesaplanan Adliye:', adliye);
 
     await db('tasks').insert({
       adliye,

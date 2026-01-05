@@ -60,12 +60,6 @@
                     <input type="text" name="barkod" placeholder="Barkod No">
                     <input type="text" name="dosya_no" placeholder="Dosya No *" required>
                     <input type="text" name="icra_dairesi" placeholder="İcra Dairesi *" required>
-                    <select name="durum">
-                        <option value="itiraz">İtiraz</option>
-                        <option value="tebliğ">Tebliğ</option>
-                        <option value="iade">İade</option>
-                    </select>
-                    <input type="date" name="tarih" value="<%= new Date().toISOString().split('T')[0] %>">
                     <textarea name="not" placeholder="Not"></textarea>
                     <button type="submit">Oluştur</button>
                 </form>
@@ -131,20 +125,30 @@
                                         </td>
                                         <% if (role==='yonetici' ) { %>
                                             <td>
-                                                <form method="POST" action="/tebligat/<%= t.id %>/update-status"
-                                                    style="display:flex; gap:0.5rem; align-items:center;">
-                                                    <select name="durum"
-                                                        style="padding:0.5rem; border-radius:6px; border:1px solid #e0e0e0;">
-                                                        <option value="itiraz" <%=t.durum==='itiraz' ? 'selected' : ''
-                                                            %>>İtiraz</option>
-                                                        <option value="tebliğ" <%=t.durum==='tebliğ' ? 'selected' : ''
-                                                            %>>Tebliğ</option>
-                                                        <option value="iade" <%=t.durum==='iade' ? 'selected' : '' %>
-                                                            >İade</option>
-                                                    </select>
-                                                    <button type="submit"
-                                                        style="padding:0.5rem 1rem; background:#667eea; color:white; border:none; border-radius:6px; cursor:pointer;">Güncelle</button>
-                                                </form>
+                                                <div style="display:flex; gap:0.5rem; align-items:center;">
+                                                    <form method="POST" action="/tebligat/<%= t.id %>/update-status"
+                                                        style="display:flex; gap:0.5rem; align-items:center; flex:1;">
+                                                        <select name="durum"
+                                                            style="padding:0.5rem; border-radius:6px; border:1px solid #e0e0e0; flex:1;">
+                                                            <option value="gönderildi" <%=t.durum==='gönderildi' ? 'selected' : ''
+                                                                %>>Gönderildi</option>
+                                                            <option value="itiraz" <%=t.durum==='itiraz' ? 'selected' : ''
+                                                                %>>İtiraz</option>
+                                                            <option value="tebliğ" <%=t.durum==='tebliğ' ? 'selected' : ''
+                                                                %>>Tebliğ</option>
+                                                            <option value="iade" <%=t.durum==='iade' ? 'selected' : '' %>
+                                                                >İade</option>
+                                                        </select>
+                                                        <button type="submit"
+                                                            style="padding:0.5rem 1rem; background:#667eea; color:white; border:none; border-radius:6px; cursor:pointer;">Güncelle</button>
+                                                    </form>
+                                                    <form method="POST" action="/tebligat/<%= t.id %>/delete" style="margin:0;">
+                                                        <button type="submit"
+                                                            onclick="return confirm('Bu tebligatı silmek istediğinizden emin misiniz?')"
+                                                            style="padding:0.5rem 0.75rem; background:#ef4444; color:white; border:none; border-radius:6px; cursor:pointer;"
+                                                            title="Sil">🗑️</button>
+                                                    </form>
+                                                </div>
                                             </td>
                                             <% } %>
                                     </tr>

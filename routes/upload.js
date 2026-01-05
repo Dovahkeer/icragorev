@@ -7,32 +7,7 @@ const { requireRole } = require('../middleware/auth');
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage() });
 
-// helper: normalize strings for robust matching (unicode normalize, remove combining marks)
-const normalizeText = (s) => {
-  if (!s && s !== 0) return '';
-  let str = String(s).normalize('NFKD').toLowerCase();
-  // remove combining diacritical marks
-  str = str.replace(/\p{M}/gu, '');
-  const map = { 'ç': 'c', 'ğ': 'g', 'ı': 'i', 'ö': 'o', 'ş': 's', 'ü': 'u', 'İ': 'i' };
-  str = str.replace(/[çğıöşüİ]/g, ch => map[ch] || ch);
-  str = str.replace(/[^a-z0-9\s]/g, ' ');
-  str = str.replace(/\s+/g, ' ').trim();
-  return str;
-};
-
-const computeAdliye = (icra_dairesi) => {
-  const d = normalizeText(icra_dairesi || '');
-  if (!d) return 'DİĞER';
-  try { console.log('[upload.computeAdliye] input:', icra_dairesi, 'normalized:', d); } catch (e) {}
-  if (d.includes('anadolu')) return 'ANADOLU';
-  if (d.includes('bakirkoy') || d.includes('bakirky') || d.includes('bakirköy')) return 'BAKIRKÖY';
-  if (d.includes('caglayan') || d.includes('cagla') || d.includes('çağlayan')) return 'ÇAĞLAYAN';
-  if (d.includes('istanbul')) return 'ÇAĞLAYAN';
-  if (d.includes('izmir')) return 'İZMİR';
-  if (d.includes('antalya')) return 'ANTALYA';
-  if (d.includes('adana')) return 'ADANA';
-  return 'DİĞER';
-};
+const { computeAdliye } = require('../helpers/adliye');
 
 router.post('/upload-excel', requireRole('atayan', 'yonetici'), upload.single('excelFile'), async (req, res) => {
   console.log('📤 Excel yükleme isteği alındı');
@@ -61,28 +36,67 @@ router.post('/upload-excel', requireRole('atayan', 'yonetici'), upload.single('e
       const rowNum = i + 2;
       
       console.log(`\n--- Satır ${rowNum} ---`);
-      console.log('İcra Dairesi:', row['İcra Dairesi']);
+      console.log('İcra Dairesi (raw):', row['İcra Dairesi']);
       console.log('İcra Esas Numarası:', row['İcra Esas Numarası']);
-      console.log('Borçlu:', row['Borçlu']);
-      console.log('Borçlu TCKN-VKN:', row['Borçlu TCKN-VKN']);
+      console.log('Borçlu (raw):', row['Borçlu']);
+      console.log('Borçlu TCKN-VKN (raw):', row['Borçlu TCKN-VKN'], 'Type:', typeof row['Borçlu TCKN-VKN']);
       
       if (!row['İcra Dairesi'] || !row['İcra Dairesi'].toString().trim()) {
         errors.push(`Satır ${rowNum}: İcra Dairesi boş olamaz`);
         continue;
       }
       
-      const icraDairesi = row['İcra Dairesi'].toString();
+      const icraDairesi = row['İcra Dairesi'].toString().trim();
       const adliye = computeAdliye(icraDairesi);
       console.log('İcra Dairesi (orijinal):', icraDairesi);
       console.log('Computed adliye:', adliye);
+      
+      // Borçlu TCKN-VKN işleme - hem ayrı sütun hem de - ile ayrılmış format desteklenir
+      let borcluTckn = '';
+      let borcluAdi = '';
+      
+      // Önce "Borçlu TCKN-VKN" kolonunu kontrol et
+      if (row['Borçlu TCKN-VKN']) {
+        const tcknValue = row['Borçlu TCKN-VKN'];
+        // Excel'de sayı olarak kaydedilmişse düzelt
+        if (typeof tcknValue === 'number') {
+          borcluTckn = Math.floor(tcknValue).toString().padStart(11, '0');
+        } else {
+          borcluTckn = tcknValue.toString().trim();
+        }
+      }
+      
+      // Borçlu adını al
+      if (row['Borçlu']) {
+        const borcluRaw = row['Borçlu'].toString().trim();
+        
+        // Eğer TCKN ayrı sütunda yoksa ve Borçlu kolonunda - varsa, oradan ayır
+        if (!borcluTckn && borcluRaw.includes('-')) {
+          const parts = borcluRaw.split('-').map(p => p.trim());
+          if (parts.length >= 2) {
+            borcluAdi = parts[0];
+            const potentialTckn = parts[1];
+            // Sayı gibi görünüyorsa TCKN olarak al
+            if (/^\d+$/.test(potentialTckn)) {
+              borcluTckn = potentialTckn.padStart(11, '0');
+            }
+          }
+        } else {
+          // - yoksa veya TCKN zaten varsa, tüm değeri isim olarak al
+          borcluAdi = borcluRaw;
+        }
+      }
+      
+      console.log('Borçlu Adı (final):', borcluAdi);
+      console.log('Borçlu TCKN (final):', borcluTckn);
       
       // Excel'den yüklenen görevler her zaman atama bekliyor olarak gelir
       validTasks.push({
         adliye,
         muvekkil: row['Müvekkil'] || '',
         portfoy: row['Portföy'] || '',
-        borclu: row['Borçlu'] || '',
-        borclu_tckn_vkn: row['Borçlu TCKN-VKN'] ? row['Borçlu TCKN-VKN'].toString() : '',
+        borclu: borcluAdi,
+        borclu_tckn_vkn: borcluTckn,
         icra_dairesi: icraDairesi,
         icra_esas_no: row['İcra Esas Numarası'] ? row['İcra Esas Numarası'].toString() : '',
         islem_turu: row['İŞLEM TÜRÜ'] || '',
