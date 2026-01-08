@@ -112,7 +112,13 @@
                                             <%= t.tckn_vkn || '-' %>
                                         </td>
                                         <td>
-                                            <%= t.barkod || '-' %>
+                                            <form method="POST" action="/tebligat/<%= t.id %>/update-barkod" style="margin:0;">
+                                                <input type="text" name="barkod" value="<%= t.barkod || '' %>" 
+                                                    placeholder="Barkod"
+                                                    style="padding:0.4rem; border-radius:6px; border:1px solid #e0e0e0; width:120px;">
+                                                <button type="submit"
+                                                    style="padding:0.4rem 0.6rem; background:#10b981; color:white; border:none; border-radius:6px; cursor:pointer; font-size:0.85rem;">✓</button>
+                                            </form>
                                         </td>
                                         <td><span class="status-badge status-<%= t.durum %>">
                                                 <%= t.durum %>

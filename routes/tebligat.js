@@ -51,6 +51,18 @@ router.post('/tebligat/:id/update-status', requireRole('yonetici'), async (req, 
   }
 });
 
+router.post('/tebligat/:id/update-barkod', requireAuth, async (req, res) => {
+  try {
+    const id = req.params.id;
+    const { barkod } = req.body;
+    await db('tebligatlar').where({ id }).update({ barkod, updated_by: req.session.userId, updated_at: db.fn.now() });
+    return res.redirect('/tebligatlar');
+  } catch (err) {
+    console.error('Tebligat barkod güncelleme hatası:', err);
+    res.status(500).send('Güncellenemedi');
+  }
+});
+
 router.post('/tebligat/:id/delete', requireRole('yonetici'), async (req, res) => {
   try {
     const id = req.params.id;

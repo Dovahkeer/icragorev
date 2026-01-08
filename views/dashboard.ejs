@@ -322,20 +322,20 @@
                               <div class="note-panel" id="notes-gorevler-<%= task.id %>"
                                 style="display:none; margin-top:0.5rem;">
                                 <div class="notes-list">
-                                  <% ((historiesByTask && historiesByTask[task.id]) || []).filter(function(h){ return
-                                    h.action==='note' ; }).forEach(function(h){ %>
-                                    <div class="note-item">
-                                      <div class="note-meta"><strong>
-                                          <%= users.find(function(u){ return u.id===h.user_id; })?.username || 'Anonim'
-                                            %>
-                                        </strong> · <small>
-                                          <%= new Date(h.created_at).toLocaleString('tr-TR') %>
-                                        </small></div>
-                                      <div class="note-body">
-                                        <%= h.details %>
+                                  <% if (historiesByTask && historiesByTask[task.id]) { %>
+                                    <% historiesByTask[task.id].filter(h => h.action === 'note').forEach(function(h){ %>
+                                      <div class="note-item">
+                                        <div class="note-meta"><strong>
+                                            <%= users.find(function(u){ return u.id===h.user_id; })?.username || 'Anonim' %>
+                                          </strong> · <small>
+                                            <%= new Date(h.created_at).toLocaleString('tr-TR') %>
+                                          </small></div>
+                                        <div class="note-body">
+                                          <%= h.details %>
+                                        </div>
                                       </div>
-                                    </div>
-                                    <% }) %>
+                                    <% }); %>
+                                  <% } %>
                                 </div>
                                 <form method="POST" action="/tasks/<%= task.id %>/note" class="note-form">
                                   <input type="hidden" name="returnTo" value="gorevler">
@@ -608,26 +608,25 @@
                                 <div class="note-panel" id="notes-onay-bekleyen-<%= task.id %>"
                                   style="display:none; margin-top:0.5rem;">
                                   <div class="notes-list">
-                                    <% ((historiesByTask && historiesByTask[task.id]) || []).filter(function(h){ return
-                                      h.action==='note' ; }).forEach(function(h){ %>
-                                      <div class="note-item">
-                                        <div class="note-meta"><strong>
-                                            <%= users.find(function(u){ return u.id===h.user_id; })?.username
-                                              || 'Anonim' %>
-                                          </strong> · <small>
-                                            <%= new Date(h.created_at).toLocaleString('tr-TR') %>
-                                          </small></div>
-                                        <div class="note-body">
-                                          <%= h.details %>
+                                    <% if (historiesByTask && historiesByTask[task.id]) { %>
+                                      <% historiesByTask[task.id].filter(h => h.action === 'note').forEach(function(h){ %>
+                                        <div class="note-item">
+                                          <div class="note-meta"><strong>
+                                              <%= users.find(function(u){ return u.id===h.user_id; })?.username || 'Anonim' %>
+                                            </strong> · <small>
+                                              <%= new Date(h.created_at).toLocaleString('tr-TR') %>
+                                            </small></div>
+                                          <div class="note-body">
+                                            <%= h.details %>
+                                          </div>
                                         </div>
-                                      </div>
-                                      <% }) %>
+                                      <% }); %>
+                                    <% } %>
                                   </div>
                                   <form method="POST" action="/tasks/<%= task.id %>/note" class="note-form">
                                     <input type="hidden" name="returnTo" value="onay-bekleyen">
                                     <textarea name="note" placeholder="Not ekleyin..." required></textarea>
-                                    <button type="submit" class="btn btn-primary"
-                                      style="margin-top:0.5rem;">Ekle</button>
+                                    <button type="submit" class="btn btn-primary" style="margin-top:0.5rem;">Ekle</button>
                                   </form>
                                 </div>
                       </div>
@@ -703,26 +702,25 @@
                                 <div class="note-panel" id="notes-bana-atanan-<%= task.id %>"
                                   style="display:none; margin-top:0.5rem;">
                                   <div class="notes-list">
-                                    <% ((historiesByTask && historiesByTask[task.id]) || []).filter(function(h){ return
-                                      h.action==='note' ; }).forEach(function(h){ %>
-                                      <div class="note-item">
-                                        <div class="note-meta"><strong>
-                                            <%= users.find(function(u){ return u.id===h.user_id; })?.username
-                                              || 'Anonim' %>
-                                          </strong> · <small>
-                                            <%= new Date(h.created_at).toLocaleString('tr-TR') %>
-                                          </small></div>
-                                        <div class="note-body">
-                                          <%= h.details %>
+                                    <% if (historiesByTask && historiesByTask[task.id]) { %>
+                                      <% historiesByTask[task.id].filter(h => h.action === 'note').forEach(function(h){ %>
+                                        <div class="note-item">
+                                          <div class="note-meta"><strong>
+                                              <%= users.find(function(u){ return u.id===h.user_id; })?.username || 'Anonim' %>
+                                            </strong> · <small>
+                                              <%= new Date(h.created_at).toLocaleString('tr-TR') %>
+                                            </small></div>
+                                          <div class="note-body">
+                                            <%= h.details %>
+                                          </div>
                                         </div>
-                                      </div>
-                                      <% }) %>
+                                      <% }); %>
+                                    <% } %>
                                   </div>
                                   <form method="POST" action="/tasks/<%= task.id %>/note" class="note-form">
                                     <input type="hidden" name="returnTo" value="bana-atanan">
                                     <textarea name="note" placeholder="Not ekleyin..." required></textarea>
-                                    <button type="submit" class="btn btn-primary"
-                                      style="margin-top:0.5rem;">Ekle</button>
+                                    <button type="submit" class="btn btn-primary" style="margin-top:0.5rem;">Ekle</button>
                                   </form>
                                 </div>
 
@@ -787,19 +785,20 @@
                             <div class="note-panel" id="notes-atama-<%= task.id %>"
                               style="display:none; margin-top:0.5rem;">
                               <div class="notes-list">
-                                <% ((historiesByTask && historiesByTask[task.id]) || []).filter(function(h){ return
-                                  h.action==='note' ; }).forEach(function(h){ %>
-                                  <div class="note-item">
-                                    <div class="note-meta"><strong>
-                                        <%= users.find(function(u){ return u.id===h.user_id; })?.username || 'Anonim' %>
-                                      </strong> · <small>
-                                        <%= new Date(h.created_at).toLocaleString('tr-TR') %>
-                                      </small></div>
-                                    <div class="note-body">
-                                      <%= h.details %>
+                                <% if (historiesByTask && historiesByTask[task.id]) { %>
+                                  <% historiesByTask[task.id].filter(h => h.action === 'note').forEach(function(h){ %>
+                                    <div class="note-item">
+                                      <div class="note-meta"><strong>
+                                          <%= users.find(function(u){ return u.id===h.user_id; })?.username || 'Anonim' %>
+                                        </strong> · <small>
+                                          <%= new Date(h.created_at).toLocaleString('tr-TR') %>
+                                        </small></div>
+                                      <div class="note-body">
+                                        <%= h.details %>
+                                      </div>
                                     </div>
-                                  </div>
-                                  <% }) %>
+                                  <% }); %>
+                                <% } %>
                               </div>
                               <form method="POST" action="/tasks/<%= task.id %>/note" class="note-form">
                                 <input type="hidden" name="returnTo" value="atama">
@@ -839,6 +838,17 @@
                             <p><strong>İcra Dairesi:</strong>
                               <%= task.icra_dairesi %>
                             </p>
+                            <p><strong>Dosya No:</strong>
+                              <%= task.icra_esas_no || '-' %>
+                            </p>
+                            <% if (task.borclu || task.borclu_tckn_vkn) { %>
+                              <p><strong>Borçlu:</strong>
+                                <%= task.borclu || '-' %>
+                                <% if (task.borclu_tckn_vkn) { %>
+                                  | <strong>TCKN:</strong> <%= task.borclu_tckn_vkn %>
+                                <% } %>
+                              </p>
+                            <% } %>
                             <p><strong>Açıklama:</strong>
                               <%= task.islem_aciklamasi %>
                             </p>
@@ -974,25 +984,25 @@
                                 <div class="note-panel" id="notes-yonetici-onay-<%= task.id %>"
                                   style="display:none; margin-top:0.5rem;">
                                   <div class="notes-list">
-                                    <% ((historiesByTask && historiesByTask[task.id]) || []).filter(function(h){ return
-                                      h.action==='note' ; }).forEach(function(h){ %>
-                                      <div class="note-item">
-                                        <div class="note-meta"><strong>
-                                            <%= users.find(function(u){ return u.id===h.user_id; })?.username
-                                              || 'Anonim' %>
-                                          </strong> · <small>
-                                            <%= new Date(h.created_at).toLocaleString('tr-TR') %>
-                                          </small></div>
-                                        <div class="note-body">
-                                          <%= h.details %>
+                                    <% if (historiesByTask && historiesByTask[task.id]) { %>
+                                      <% historiesByTask[task.id].filter(h => h.action === 'note').forEach(function(h){ %>
+                                        <div class="note-item">
+                                          <div class="note-meta"><strong>
+                                              <%= users.find(function(u){ return u.id===h.user_id; })?.username || 'Anonim' %>
+                                            </strong> · <small>
+                                              <%= new Date(h.created_at).toLocaleString('tr-TR') %>
+                                            </small></div>
+                                          <div class="note-body">
+                                            <%= h.details %>
+                                          </div>
                                         </div>
-                                      </div>
-                                      <% }) %>
+                                      <% }); %>
+                                    <% } %>
                                   </div>
                                   <form method="POST" action="/tasks/<%= task.id %>/note" class="note-form">
+                                    <input type="hidden" name="returnTo" value="yonetici-onay">
                                     <textarea name="note" placeholder="Not ekleyin..." required></textarea>
-                                    <button type="submit" class="btn btn-primary"
-                                      style="margin-top:0.5rem;">Ekle</button>
+                                    <button type="submit" class="btn btn-primary" style="margin-top:0.5rem;">Ekle</button>
                                   </form>
                                 </div>
                           </div>
