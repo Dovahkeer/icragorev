@@ -8,8 +8,10 @@ const router = express.Router();
 router.get('/tebligatlar', requireAuth, async (req, res) => {
   try {
     const tebligatlar = await db('tebligatlar').orderBy('created_at', 'desc').select('*');
+    const users = await db('users').select('id', 'username');
     res.render('tebligatlar', {
       tebligatlar,
+      users,
       username: req.session.username,
       role: req.session.userRole
     });
