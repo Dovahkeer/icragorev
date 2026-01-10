@@ -431,7 +431,15 @@ router.get('/archive', requireAuth, async (req, res) => {
       .orderBy('updated_at', 'desc')
       .select('tasks.*');
 
-    res.render('archive', { tasks, username: req.session.username });
+    const tebligatArsiv = await db('tebligat_arsiv')
+      .orderBy('arsivlenme_tarihi', 'desc')
+      .select('*');
+
+    res.render('archive', { 
+      tasks, 
+      tebligatArsiv,
+      username: req.session.username 
+    });
   } catch (error) {
     console.error('Arşiv hatası:', error);
     res.status(500).send('Arşiv yüklenemedi');
@@ -646,11 +654,33 @@ router.post('/upload-excel', requireAuth, upload.single('excelFile'), async (req
 
 router.get('/all-tasks', requireAuth, async (req, res) => {
   try {
-    const allTasks = await db('tasks')
+    const { status, oncelik, adliye, muvekkil, creator, assignee } = req.query;
+    
+    let query = db('tasks')
       .whereNot('status', 'arsiv')
-      .orderBy('created_at', 'desc')
-      .select('tasks.*');
-
+      .orderBy('created_at', 'desc');
+    
+    // Filtreler
+    if (status) {
+      query = query.where('status', status);
+    }
+    if (oncelik) {
+      query = query.where('oncelik', oncelik);
+    }
+    if (adliye) {
+      query = query.where('adliye', 'like', `%${adliye}%`);
+    }
+    if (muvekkil) {
+      query = query.where('muvekkil', 'like', `%${muvekkil}%`);
+    }
+    if (creator) {
+      query = query.where('creator_id', creator);
+    }
+    if (assignee) {
+      query = query.where('assignee_id', assignee);
+    }
+    
+    const allTasks = await query.select('tasks.*');
     const users = await db('users').select('id', 'username', 'role');
 
     res.render('all-tasks', {
@@ -658,7 +688,13 @@ router.get('/all-tasks', requireAuth, async (req, res) => {
       users,
       username: req.session.username,
       role: req.session.userRole,
-      userId: req.session.userId
+      userId: req.session.userId,
+      filterStatus: status || '',
+      filterOncelik: oncelik || '',
+      filterAdliye: adliye || '',
+      filterMuvekkil: muvekkil || '',
+      filterCreator: creator || '',
+      filterAssignee: assignee || ''
     });
   } catch (error) {
     console.error('Tüm görevler hatası:', error);

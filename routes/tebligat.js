@@ -7,13 +7,39 @@ const router = express.Router();
 
 router.get('/tebligatlar', requireAuth, async (req, res) => {
   try {
-    const tebligatlar = await db('tebligatlar').orderBy('created_at', 'desc').select('*');
+    const { ekleyen, icra_dairesi, muvekkil, durum } = req.query;
+
+    let query = db('tebligatlar').orderBy('created_at', 'desc');
+
+    // Filtreleme - sadece gerekli alanlar
+    if (ekleyen) {
+      query = query.where('created_by', ekleyen);
+    }
+    if (icra_dairesi) {
+      query = query.where('icra_dairesi', 'like', `%${icra_dairesi}%`);
+    }
+    if (muvekkil) {
+      query = query.where('muvekkil', 'like', `%${muvekkil}%`);
+    }
+    if (durum) {
+      query = query.where('durum', durum);
+    }
+
+    const tebligatlar = await query.select('*');
     const users = await db('users').select('id', 'username');
+
     res.render('tebligatlar', {
       tebligatlar,
       users,
       username: req.session.username,
-      role: req.session.userRole
+      userId: req.session.userId,
+      role: req.session.userRole,
+      filters: {
+        ekleyen: ekleyen || '',
+        icra_dairesi: icra_dairesi || '',
+        muvekkil: muvekkil || '',
+        durum: durum || ''
+      }
     });
   } catch (err) {
     console.error('Tebligat list error', err);
@@ -61,6 +87,56 @@ router.post('/tebligat/:id/update-barkod', requireAuth, async (req, res) => {
     return res.redirect('/tebligatlar');
   } catch (err) {
     console.error('Tebligat barkod güncelleme hatası:', err);
+    res.status(500).send('Güncellenemedi');
+  }
+});
+
+router.post('/tebligat/:id/update-not', requireAuth, async (req, res) => {
+  try {
+    const id = req.params.id;
+    const { notlar } = req.body;
+    await db('tebligatlar').where({ id }).update({ notlar, updated_by: req.session.userId, updated_at: db.fn.now() });
+    return res.redirect('/tebligatlar');
+  } catch (err) {
+    console.error('Tebligat not güncelleme hatası:', err);
+    res.status(500).send('Güncellenemedi');
+  }
+});
+
+router.post('/tebligat/:id/update-user', requireAuth, async (req, res) => {
+  try {
+    const id = req.params.id;
+    const { created_by } = req.body;
+    await db('tebligatlar').where({ id }).update({ created_by: created_by || null, updated_by: req.session.userId, updated_at: db.fn.now() });
+    return res.redirect('/tebligatlar');
+  } catch (err) {
+    console.error('Tebligat kullanıcı güncelleme hatası:', err);
+    res.status(500).send('Güncellenemedi');
+  }
+});
+
+router.post('/tebligat/:id/mark-progress', requireAuth, async (req, res) => {
+  try {
+    const id = req.params.id;
+    const tebligat = await db('tebligatlar').where({ id }).first();
+
+    // Sadece kendi oluşturduğu tebligatları işaretleyebilir
+    if (tebligat.created_by !== req.session.userId) {
+      return res.status(403).send('Bu işlem için yetkiniz yok');
+    }
+
+    // Yapılıyor durumunu toggle et
+    const newDurum = tebligat.durum === 'yapılıyor' ? 'itiraz' : 'yapılıyor';
+
+    await db('tebligatlar').where({ id }).update({
+      durum: newDurum,
+      updated_by: req.session.userId,
+      updated_at: db.fn.now()
+    });
+
+    return res.redirect('/tebligatlar');
+  } catch (err) {
+    console.error('Tebligat yapılıyor işaretleme hatası:', err);
     res.status(500).send('Güncellenemedi');
   }
 });

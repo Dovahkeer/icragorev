@@ -59,7 +59,16 @@
             <h3>
               <%= tasks ? tasks.length : 0 %>
             </h3>
-            <p>Toplam Arşivlenen</p>
+            <p>Arşivlenen Görevler</p>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon blue">📝</div>
+          <div class="stat-info">
+            <h3>
+              <%= tebligatArsiv ? tebligatArsiv.length : 0 %>
+            </h3>
+            <p>Arşivlenen Tebligatlar</p>
           </div>
         </div>
         <div class="stat-card">
@@ -82,7 +91,82 @@
         </div>
       </div>
 
+      <!-- Tebligat Arşivi -->
+      <div class="section active" style="margin-bottom: 2rem;">
+        <h2>Tebligat Arşivi</h2>
+        <% if (tebligatArsiv && tebligatArsiv.length> 0) { %>
+          <div class="table-container">
+            <table class="modern-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Dosya No</th>
+                  <th>İcra Dairesi</th>
+                  <th>Müvekkil</th>
+                  <th>Portföy</th>
+                  <th>Taraf</th>
+                  <th>TCKN/VKN</th>
+                  <th>Barkod</th>
+                  <th>Durum</th>
+                  <th>Tarih</th>
+                  <th>Not</th>
+                  <th>Arşivlenme</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% tebligatArsiv.forEach(t=> { %>
+                  <tr>
+                    <td><span class="id-badge">#<%= t.id %></span></td>
+                    <td><strong>
+                        <%= t.dosya_no || '-' %>
+                      </strong></td>
+                    <td>
+                      <%= t.icra_dairesi || '-' %>
+                    </td>
+                    <td>
+                      <%= t.muvekkil || '-' %>
+                    </td>
+                    <td>
+                      <%= t.portfoy || '-' %>
+                    </td>
+                    <td>
+                      <%= t.taraf || '-' %>
+                    </td>
+                    <td>
+                      <%= t.tckn_vkn || '-' %>
+                    </td>
+                    <td>
+                      <%= t.barkod || '-' %>
+                    </td>
+                    <td>
+                      <span class="status-badge status-tebliğ">✅ Tebliğ</span>
+                    </td>
+                    <td>
+                      <%= t.tarih %>
+                    </td>
+                    <td>
+                      <%= t.notlar || '-' %>
+                    </td>
+                    <td>
+                      <%= t.arsivlenme_tarihi %>
+                    </td>
+                  </tr>
+                  <% }) %>
+              </tbody>
+            </table>
+          </div>
+          <% } else { %>
+            <div class="empty-state">
+              <div class="empty-state-icon">📝</div>
+              <p>Arşivlenmiş tebligat bulunmuyor</p>
+            </div>
+            <% } %>
+      </div>
+
+      <!-- Görev Arşivi -->
+
       <div class="section active">
+        <h2>Görev Arşivi</h2>
         <% if (tasks && tasks.length> 0) { %>
           <div class="table-container">
             <table class="modern-table">

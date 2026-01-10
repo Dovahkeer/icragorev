@@ -765,6 +765,27 @@ body {
   color: #f57f17;
 }
 
+/* Tebligat Status Badges */
+.status-yapılıyor {
+  background: #fff3e0;
+  color: #f57c00;
+}
+
+.status-gönderildi {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.status-itiraz {
+  background: #ffebee;
+  color: #c62828;
+}
+
+.status-tebliğ {
+  background: #e8f5e9;
+  color: #388e3c;
+}
+
 /* Approve and Return Buttons */
 .btn-approve {
   background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);

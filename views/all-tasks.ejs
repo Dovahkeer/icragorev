@@ -50,24 +50,65 @@
       </div>
 
       <!-- Filtre -->
-      <div
-        style="margin-bottom: 1.5rem; display: flex; gap: 1rem; flex-wrap: wrap; background: white; padding: 1rem; border-radius: 10px;">
-        <input type="text" id="searchInput" placeholder="🔍 Ara (İşlem türü, borçlu, icra dairesi...)"
-          style="flex: 1; min-width: 250px; padding: 0.75rem; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 0.95rem;">
-        <select id="statusFilter"
-          style="padding: 0.75rem; border: 2px solid #e0e0e0; border-radius: 8px; min-width: 150px;">
-          <option value="">Tüm Durumlar</option>
-          <option value="tamamlanmadi">Tamamlanmadı</option>
-          <option value="kontrol_ediliyor">Kontrol Ediliyor</option>
-          <option value="son_onay_bekliyor">Son Onay Bekliyor</option>
-          <option value="iade">İade</option>
-        </select>
-        <select id="priorityFilter"
-          style="padding: 0.75rem; border: 2px solid #e0e0e0; border-radius: 8px; min-width: 120px;">
-          <option value="">Tüm Öncelikler</option>
-          <option value="acil">🔥 Acil</option>
-          <option value="rutin">📋 Rutin</option>
-        </select>
+      <div style="margin-bottom: 1.5rem; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+        <form method="GET" action="/all-tasks" style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: end;">
+          <div style="flex: 1; min-width: 150px;">
+            <label style="display: block; margin-bottom: 0.3rem; font-size: 0.9rem; color: #666;">Durum</label>
+            <select name="status" style="width: 100%; padding: 0.5rem; border-radius: 6px; border: 1px solid #ddd;">
+              <option value="">Tüm Durumlar</option>
+              <option value="tamamlanmadi" <%= filterStatus === 'tamamlanmadi' ? 'selected' : '' %>>Tamamlanmadı</option>
+              <option value="kontrol_ediliyor" <%= filterStatus === 'kontrol_ediliyor' ? 'selected' : '' %>>Kontrol Ediliyor</option>
+              <option value="son_onay_bekliyor" <%= filterStatus === 'son_onay_bekliyor' ? 'selected' : '' %>>Son Onay Bekliyor</option>
+              <option value="iade" <%= filterStatus === 'iade' ? 'selected' : '' %>>İade</option>
+              <option value="tamamlandi" <%= filterStatus === 'tamamlandi' ? 'selected' : '' %>>Tamamlandı</option>
+              <option value="uygun" <%= filterStatus === 'uygun' ? 'selected' : '' %>>Uygun</option>
+            </select>
+          </div>
+          <div style="flex: 1; min-width: 150px;">
+            <label style="display: block; margin-bottom: 0.3rem; font-size: 0.9rem; color: #666;">Öncelik</label>
+            <select name="oncelik" style="width: 100%; padding: 0.5rem; border-radius: 6px; border: 1px solid #ddd;">
+              <option value="">Tüm Öncelikler</option>
+              <option value="acil" <%= filterOncelik === 'acil' ? 'selected' : '' %>>🔥 Acil</option>
+              <option value="rutin" <%= filterOncelik === 'rutin' ? 'selected' : '' %>>📋 Rutin</option>
+            </select>
+          </div>
+          <div style="flex: 1; min-width: 150px;">
+            <label style="display: block; margin-bottom: 0.3rem; font-size: 0.9rem; color: #666;">Adliye</label>
+            <input type="text" name="adliye" value="<%= filterAdliye || '' %>" placeholder="Adliye" 
+              style="width: 100%; padding: 0.5rem; border-radius: 6px; border: 1px solid #ddd;">
+          </div>
+          <div style="flex: 1; min-width: 150px;">
+            <label style="display: block; margin-bottom: 0.3rem; font-size: 0.9rem; color: #666;">Müvekkil</label>
+            <input type="text" name="muvekkil" value="<%= filterMuvekkil || '' %>" placeholder="Müvekkil" 
+              style="width: 100%; padding: 0.5rem; border-radius: 6px; border: 1px solid #ddd;">
+          </div>
+          <div style="flex: 1; min-width: 150px;">
+            <label style="display: block; margin-bottom: 0.3rem; font-size: 0.9rem; color: #666;">Ekleyen</label>
+            <select name="creator" style="width: 100%; padding: 0.5rem; border-radius: 6px; border: 1px solid #ddd;">
+              <option value="">Tümü</option>
+              <% users.forEach(function(u) { %>
+                <option value="<%= u.id %>" <%= filterCreator == u.id ? 'selected' : '' %>>
+                  <%= u.username %>
+                </option>
+              <% }); %>
+            </select>
+          </div>
+          <div style="flex: 1; min-width: 150px;">
+            <label style="display: block; margin-bottom: 0.3rem; font-size: 0.9rem; color: #666;">Atanan</label>
+            <select name="assignee" style="width: 100%; padding: 0.5rem; border-radius: 6px; border: 1px solid #ddd;">
+              <option value="">Tümü</option>
+              <% users.forEach(function(u) { %>
+                <option value="<%= u.id %>" <%= filterAssignee == u.id ? 'selected' : '' %>>
+                  <%= u.username %>
+                </option>
+              <% }); %>
+            </select>
+          </div>
+          <div style="display: flex; gap: 0.5rem;">
+            <button type="submit" style="padding: 0.5rem 1.5rem; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer;">Filtrele</button>
+            <a href="/all-tasks" style="padding: 0.5rem 1rem; background: #e0e0e0; color: #333; border: none; border-radius: 6px; text-decoration: none; display: inline-block;">Temizle</a>
+          </div>
+        </form>
       </div>
 
       <% if (tasks && tasks.length> 0) { %>
@@ -91,14 +132,13 @@
                 <th>Tarih</th>
               </tr>
             </thead>
-            <tbody id="taskTableBody">
+            <tbody>
               <% tasks.forEach(task=> {
                 const creator = users.find(u => u.id === task.creator_id);
                 const manager = users.find(u => u.id === task.manager_id);
                 const assignee = users.find(u => u.id === task.assignee_id);
                 %>
-                <tr data-status="<%= task.status %>" data-priority="<%= task.oncelik %>"
-                  class="<%= task.oncelik === 'acil' ? 'urgent-row' : '' %>">
+                <tr class="<%= task.oncelik === 'acil' ? 'urgent-row' : '' %>">
                   <td>
                     <span class="badge <%= task.oncelik === 'acil' ? 'badge-urgent' : 'badge-normal' %>">
                       <%= task.oncelik==='acil' ? '🔥' : '📋' %>
@@ -161,37 +201,22 @@
   </div>
 
   <script>
-    const searchInput = document.getElementById('searchInput');
-    const statusFilter = document.getElementById('statusFilter');
-    const priorityFilter = document.getElementById('priorityFilter');
-    const tableBody = document.getElementById('taskTableBody');
-
-    function filterTable() {
-      const searchTerm = searchInput.value.toLowerCase();
-      const statusValue = statusFilter.value;
-      const priorityValue = priorityFilter.value;
-      const rows = tableBody.getElementsByTagName('tr');
-
-      for (let row of rows) {
-        const text = row.textContent.toLowerCase();
-        const status = row.getAttribute('data-status');
-        const priority = row.getAttribute('data-priority');
-
-        const matchSearch = text.includes(searchTerm);
-        const matchStatus = !statusValue || status === statusValue;
-        const matchPriority = !priorityValue || priority === priorityValue;
-
-        if (matchSearch && matchStatus && matchPriority) {
-          row.style.display = '';
-        } else {
-          row.style.display = 'none';
-        }
+    // Scroll pozisyonunu koru
+    document.addEventListener('DOMContentLoaded', function() {
+      // Sayfa yüklendiğinde kaydedilmiş scroll pozisyonuna dön
+      const scrollPos = sessionStorage.getItem('scrollPos');
+      if (scrollPos) {
+        window.scrollTo(0, parseInt(scrollPos));
+        sessionStorage.removeItem('scrollPos');
       }
-    }
 
-    searchInput.addEventListener('input', filterTable);
-    statusFilter.addEventListener('change', filterTable);
-    priorityFilter.addEventListener('change', filterTable);
+      // Tüm formları dinle ve submit öncesi scroll pozisyonunu kaydet
+      document.querySelectorAll('form').forEach(function(form) {
+        form.addEventListener('submit', function() {
+          sessionStorage.setItem('scrollPos', window.scrollY);
+        });
+      });
+    });
   </script>
 </body>
 

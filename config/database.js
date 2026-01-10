@@ -113,6 +113,31 @@ async function initDatabase() {
       }
     });
 
+    // Tebligat Arşiv Tablosu
+    await db.schema.hasTable('tebligat_arsiv').then(async (exists) => {
+      if (!exists) {
+        await db.schema.createTable('tebligat_arsiv', (table) => {
+          table.increments('id').primary();
+          table.string('muvekkil');
+          table.string('portfoy');
+          table.string('taraf');
+          table.string('tckn_vkn');
+          table.string('barkod');
+          table.string('dosya_no');
+          table.string('icra_dairesi');
+          table.string('durum');
+          table.date('tarih');
+          table.text('notlar');
+          table.integer('created_by').unsigned().references('id').inTable('users');
+          table.integer('updated_by').unsigned().references('id').inTable('users');
+          table.date('arsivlenme_tarihi');
+          table.integer('arsivleyen').unsigned().references('id').inTable('users');
+          table.timestamps(true, true);
+        });
+        console.log('✓ tebligat_arsiv tablosu oluşturuldu');
+      }
+    });
+
     const userCount = await db('users').count('id as count').first();
     if (userCount.count === 0) {
       const passwordPit10 = await bcrypt.hash('pit10', 10);
