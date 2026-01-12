@@ -72,7 +72,6 @@
                     style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
                     <select name="durum" style="padding:0.75rem; border-radius:8px; border:1px solid #e0e0e0;">
                         <option value="">Tüm Durumlar</option>
-                        <option value="yapılıyor" <%=filters.durum==='yapılıyor' ? 'selected' : '' %>>Yapılıyor</option>
                         <option value="gönderildi" <%=filters.durum==='gönderildi' ? 'selected' : '' %>>Gönderildi
                         </option>
                         <option value="itiraz" <%=filters.durum==='itiraz' ? 'selected' : '' %>>İtiraz</option>
@@ -113,13 +112,11 @@
                                     <th>Taraf</th>
                                     <th>TCKN/VKN</th>
                                     <th>Barkod</th>
-                                    <th>Durum</th>
+                                        
                                     <th>Tarih</th>
                                     <th>Not</th>
-                                    <th>Ekleyen</th>
-                                    <% if (role==='yonetici' ) { %>
+                                        <th>Ekleyen</th>
                                         <th>İşlemler</th>
-                                        <% } %>
                                 </tr>
                             </thead>
                             <tbody>
@@ -154,9 +151,7 @@
                                                     style="padding:0.4rem 0.6rem; background:#10b981; color:white; border:none; border-radius:6px; cursor:pointer; font-size:0.85rem;">✓</button>
                                             </form>
                                         </td>
-                                        <td><span class="status-badge status-<%= t.durum %>">
-                                                <%= t.durum %>
-                                            </span></td>
+                                        
                                         <td>
                                             <%= t.tarih %>
                                         </td>
@@ -185,53 +180,39 @@
                                                     style="padding:0.4rem 0.6rem; background:#10b981; color:white; border:none; border-radius:6px; cursor:pointer; font-size:0.85rem; margin-top:0.25rem;">✓</button>
                                             </form>
                                         </td>
-                                        <% if (role==='atanan' && t.created_by===userId) { %>
-                                            <td>
-                                                <form method="POST" action="/tebligat/<%= t.id %>/mark-progress"
+                                        <td>
+                                            <div style="display:flex; gap:0.5rem; align-items:center;">
+                                                <form method="POST" action="/tebligat/<%= t.id %>/update-status"
+                                                    class="scroll-form"
+                                                    style="display:flex; gap:0.5rem; align-items:center; flex:1;">
+                                                    <select name="durum"
+                                                        style="padding:0.5rem; border-radius:6px; border:1px solid #e0e0e0; flex:1;">
+                                                        <option value="">-</option>
+
+                                                        <option value="gönderildi" <%=t.durum==='gönderildi'
+                                                            ? 'selected' : '' %>>Gönderildi</option>
+                                                        <option value="itiraz" <%=t.durum==='itiraz' ? 'selected'
+                                                            : '' %>>İtiraz</option>
+                                                        <option value="tebliğ" <%=t.durum==='tebliğ' ? 'selected'
+                                                            : '' %>>Tebliğ</option>
+                                                        <option value="iade" <%=t.durum==='iade' ? 'selected' : ''
+                                                            %>
+                                                            >İade</option>
+                                                    </select>
+                                                    <button type="submit"
+                                                        style="padding:0.5rem 1rem; background:#667eea; color:white; border:none; border-radius:6px; cursor:pointer;">Güncelle</button>
+                                                </form>
+                                                <% if (role==='yonetici' ) { %>
+                                                <form method="POST" action="/tebligat/<%= t.id %>/delete"
                                                     class="scroll-form" style="margin:0;">
                                                     <button type="submit"
-                                                        style="padding:0.5rem 1rem; background:<%= t.durum === 'yapılıyor' ? '#f59e0b' : '#10b981' %>; color:white; border:none; border-radius:6px; cursor:pointer;">
-                                                        <%= t.durum==='yapılıyor' ? '⏸ Yapılıyor'
-                                                            : '▶ Yapılıyor Olarak İşaretle' %>
-                                                    </button>
+                                                        onclick="return confirm('Bu tebligatı silmek istediğinizden emin misiniz?')"
+                                                        style="padding:0.5rem 0.75rem; background:#ef4444; color:white; border:none; border-radius:6px; cursor:pointer;"
+                                                        title="Sil">🗑️</button>
                                                 </form>
-                                            </td>
-                                            <% } else if (role==='yonetici' ) { %>
-                                                <td>
-                                                    <div style="display:flex; gap:0.5rem; align-items:center;">
-                                                        <form method="POST" action="/tebligat/<%= t.id %>/update-status"
-                                                            class="scroll-form"
-                                                            style="display:flex; gap:0.5rem; align-items:center; flex:1;">
-                                                            <select name="durum"
-                                                                style="padding:0.5rem; border-radius:6px; border:1px solid #e0e0e0; flex:1;">
-                                                                <option value="">-</option>
-                                                                <option value="yapılıyor" <%=t.durum==='yapılıyor'
-                                                                    ? 'selected' : '' %>>Yapılıyor</option>
-                                                                <option value="gönderildi" <%=t.durum==='gönderildi'
-                                                                    ? 'selected' : '' %>>Gönderildi</option>
-                                                                <option value="itiraz" <%=t.durum==='itiraz'
-                                                                    ? 'selected' : '' %>>İtiraz</option>
-                                                                <option value="tebliğ" <%=t.durum==='tebliğ'
-                                                                    ? 'selected' : '' %>>Tebliğ</option>
-                                                                <option value="iade" <%=t.durum==='iade' ? 'selected'
-                                                                    : '' %>
-                                                                    >İade</option>
-                                                            </select>
-                                                            <button type="submit"
-                                                                style="padding:0.5rem 1rem; background:#667eea; color:white; border:none; border-radius:6px; cursor:pointer;">Güncelle</button>
-                                                        </form>
-                                                        <form method="POST" action="/tebligat/<%= t.id %>/delete"
-                                                            class="scroll-form" style="margin:0;">
-                                                            <button type="submit"
-                                                                onclick="return confirm('Bu tebligatı silmek istediğinizden emin misiniz?')"
-                                                                style="padding:0.5rem 0.75rem; background:#ef4444; color:white; border:none; border-radius:6px; cursor:pointer;"
-                                                                title="Sil">🗑️</button>
-                                                        </form>
-                                                    </div>
-                                                </td>
-                                                <% } else { %>
-                                                    <td>-</td>
-                                                    <% } %>
+                                                <% } %>
+                                            </div>
+                                        </td>
                                     </tr>
                                     <% }) %>
                             </tbody>

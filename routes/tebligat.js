@@ -115,32 +115,6 @@ router.post('/tebligat/:id/update-user', requireAuth, async (req, res) => {
   }
 });
 
-router.post('/tebligat/:id/mark-progress', requireAuth, async (req, res) => {
-  try {
-    const id = req.params.id;
-    const tebligat = await db('tebligatlar').where({ id }).first();
-
-    // Sadece kendi oluşturduğu tebligatları işaretleyebilir
-    if (tebligat.created_by !== req.session.userId) {
-      return res.status(403).send('Bu işlem için yetkiniz yok');
-    }
-
-    // Yapılıyor durumunu toggle et
-    const newDurum = tebligat.durum === 'yapılıyor' ? 'itiraz' : 'yapılıyor';
-
-    await db('tebligatlar').where({ id }).update({
-      durum: newDurum,
-      updated_by: req.session.userId,
-      updated_at: db.fn.now()
-    });
-
-    return res.redirect('/tebligatlar');
-  } catch (err) {
-    console.error('Tebligat yapılıyor işaretleme hatası:', err);
-    res.status(500).send('Güncellenemedi');
-  }
-});
-
 router.post('/tebligat/:id/delete', requireRole('yonetici'), async (req, res) => {
   try {
     const id = req.params.id;
