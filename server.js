@@ -8,6 +8,7 @@ const taskRoutes = require('./routes/tasks');
 const uploadRoutes = require('./routes/upload');
 const downloadRoutes = require('./routes/download');
 const tebligatRoutes = require('./routes/tebligat');
+const usersRoutes = require('./routes/users');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -39,6 +40,7 @@ app.use('/', taskRoutes);
 app.use('/', uploadRoutes);
 app.use('/', downloadRoutes);
 app.use('/', tebligatRoutes);
+app.use('/', usersRoutes);
 
 app.get('/', (req, res) => {
   if (req.session.userId) {

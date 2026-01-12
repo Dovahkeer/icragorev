@@ -159,6 +159,30 @@ async function initDatabase() {
       console.log('✓ Kullanıcılar oluşturuldu (atayan: pit10, diğer: 123456)');
     }
 
+    // Ensure requested user changes: rename 'sevvalaslanboga' -> 'elauncu' and add 'humeyra' if missing
+    try {
+      const existing = await db('users').where({ username: 'sevvalaslanboga' }).first();
+      if (existing) {
+        await db('users').where({ id: existing.id }).update({ username: 'elauncu' });
+        console.log("✓ 'sevvalaslanboga' kullanıcısının adı 'elauncu' olarak değiştirildi");
+      } else {
+        // maybe already renamed
+        const already = await db('users').where({ username: 'elauncu' }).first();
+        if (already) console.log("✓ 'elauncu' kullanıcısı zaten mevcut");
+      }
+
+      const humeyra = await db('users').where({ username: 'humeyra' }).first();
+      if (!humeyra) {
+        const password123456 = await bcrypt.hash('123456', 10);
+        await db('users').insert({ username: 'humeyra', password_hash: password123456, role: 'atanan' });
+        console.log("✓ 'humeyra' kullanıcısı eklendi (şifre: 123456)");
+      } else {
+        console.log("✓ 'humeyra' kullanıcısı zaten mevcut");
+      }
+    } catch (e) {
+      console.error('Kullanıcı güncelleme sırasında hata:', e);
+    }
+
     console.log('✓ Veritabanı hazır!');
   } catch (error) {
     console.error('Veritabanı hatası:', error);

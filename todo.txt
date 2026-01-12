@@ -1,0 +1,3 @@
+1. kullanıcı listesi düzenlenecek filtreleme özelliği getileecek
+2. tebligat lsitesinde herkesin düzenleme yetkisi yok herekese düzenleme yetkisi getirilecek
+3. arayüz değiştirilecek. yeni ve daha modern bir tasarıma gidilecek özellikle görevlerim ve bana atanan sayfasında daha küçük kutular kullanılacak.

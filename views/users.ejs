@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kullanıcı Yönetimi - <%= username %></title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>İcra Takip</h2>
+                <p><%= username %> (<%= role %>)</p>
+            </div>
+            <nav class="sidebar-menu">
+                <a href="/dashboard" class="menu-item">
+                    <span class="menu-item-icon">📊</span>
+                    <span>Ana Panel</span>
+                </a>
+                <a href="/all-tasks" class="menu-item">
+                    <span class="menu-item-icon">📋</span>
+                    <span>Tüm Görevler</span>
+                </a>
+                <a href="/tebligatlar" class="menu-item">
+                    <span class="menu-item-icon">📝</span>
+                    <span>Tebligatlar</span>
+                </a>
+                <a href="/archive" class="menu-item">
+                    <span class="menu-item-icon">📦</span>
+                    <span>Arşiv</span>
+                </a>
+                <a href="/users" class="menu-item active">
+                    <span class="menu-item-icon">👥</span>
+                    <span>Kullanıcılar</span>
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <form method="GET" action="/logout">
+                    <button type="submit" class="logout-btn">Çıkış Yap</button>
+                </form>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div class="content-header">
+                <h1>Kullanıcı Yönetimi</h1>
+                <p class="breadcrumb">Kullanıcı ekleme, düzenleme ve silme işlemleri</p>
+            </div>
+
+            <!-- Yeni Kullanıcı Oluştur -->
+            <section class="section active" style="margin-bottom: 2rem;">
+                <h2>Yeni Kullanıcı Oluştur</h2>
+                <form method="POST" action="/users/create" class="task-form">
+                    <input type="text" name="username" placeholder="Kullanıcı Adı *" required>
+                    <input type="password" name="password" placeholder="Şifre *" required>
+                    <select name="role" required>
+                        <option value="">Rol Seçin *</option>
+                        <option value="yonetici">Yönetici</option>
+                        <option value="atayan">Atayan</option>
+                        <option value="atanan">Atanan</option>
+                    </select>
+                    <button type="submit">Kullanıcı Oluştur</button>
+                </form>
+            </section>
+
+            <!-- Kullanıcı Listesi -->
+            <section class="section active">
+                <h2>Kullanıcı Listesi</h2>
+                
+                <!-- Filtre -->
+                <div style="margin-bottom: 1.5rem; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+                    <form method="GET" action="/users" style="display: flex; gap: 1rem; align-items: end; flex-wrap: wrap;">
+                        <div style="flex: 1; min-width: 150px;">
+                            <label style="display: block; margin-bottom: 0.3rem; font-size: 0.9rem; color: #666;">Kullanıcı Adı</label>
+                            <input type="text" name="search" value="<%= filterSearch %>" placeholder="Ara..." 
+                                style="width: 100%; padding: 0.5rem; border-radius: 6px; border: 1px solid #ddd;">
+                        </div>
+                        <div style="flex: 1; min-width: 150px;">
+                            <label style="display: block; margin-bottom: 0.3rem; font-size: 0.9rem; color: #666;">Rol</label>
+                            <select name="role" style="width: 100%; padding: 0.5rem; border-radius: 6px; border: 1px solid #ddd;">
+                                <option value="">Tüm Roller</option>
+                                <option value="yonetici" <%= filterRole === 'yonetici' ? 'selected' : '' %>>Yönetici</option>
+                                <option value="atayan" <%= filterRole === 'atayan' ? 'selected' : '' %>>Atayan</option>
+                                <option value="atanan" <%= filterRole === 'atanan' ? 'selected' : '' %>>Atanan</option>
+                            </select>
+                        </div>
+                        <div>
+                            <button type="submit" style="padding: 0.5rem 1.5rem; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer;">Filtrele</button>
+                            <a href="/users" style="padding: 0.5rem 1rem; background: #e0e0e0; color: #333; border: none; border-radius: 6px; text-decoration: none; display: inline-block; margin-left: 0.5rem;">Temizle</a>
+                        </div>
+                    </form>
+                </div>
+                
+                <% if (users && users.length) { %>
+                    <div class="modern-table-wrapper">
+                        <table class="modern-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Kullanıcı Adı</th>
+                                    <th>Rol</th>
+                                    <th>Oluşturulma Tarihi</th>
+                                    <th>İşlemler</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% users.forEach(function(u){ %>
+                                    <tr>
+                                        <td><span class="id-badge">#<%= u.id %></span></td>
+                                        <td><strong><%= u.username %></strong></td>
+                                        <td>
+                                            <span class="badge <%= u.role === 'yonetici' ? 'badge-urgent' : u.role === 'atayan' ? 'badge-normal' : 'badge-info' %>">
+                                                <%= u.role === 'yonetici' ? 'Yönetici' : u.role === 'atayan' ? 'Atayan' : 'Atanan' %>
+                                            </span>
+                                        </td>
+                                        <td><%= new Date(u.created_at).toLocaleDateString('tr-TR') %></td>
+                                        <td>
+                                            <div style="display: flex; gap: 0.5rem;">
+                                                <button onclick="editUser(<%= u.id %>, '<%= u.username %>', '<%= u.role %>')" 
+                                                    style="padding: 0.5rem 1rem; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                                                    ✏️ Düzenle
+                                                </button>
+                                                <% if (u.id !== userId) { %>
+                                                    <form method="POST" action="/users/<%= u.id %>/delete" style="margin: 0;">
+                                                        <button type="submit" onclick="return confirm('Bu kullanıcıyı silmek istediğinizden emin misiniz?')"
+                                                            style="padding: 0.5rem 1rem; background: #ef4444; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                                                            🗑️ Sil
+                                                        </button>
+                                                    </form>
+                                                <% } %>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <% }); %>
+                            </tbody>
+                        </table>
+                    </div>
+                <% } else { %>
+                    <div class="empty-state">
+                        <div class="empty-state-icon">👥</div>
+                        <p>Kullanıcı bulunamadı</p>
+                    </div>
+                <% } %>
+            </section>
+        </main>
+    </div>
+
+    <!-- Düzenleme Modal -->
+    <div id="editModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+        <div style="background: white; padding: 2rem; border-radius: 12px; max-width: 500px; width: 90%;">
+            <h2 style="margin-bottom: 1.5rem;">Kullanıcı Düzenle</h2>
+            <form id="editForm" method="POST" action="">
+                <input type="text" id="editUsername" name="username" placeholder="Kullanıcı Adı" required style="width: 100%; padding: 0.75rem; margin-bottom: 1rem; border-radius: 6px; border: 1px solid #ddd;">
+                <select id="editRole" name="role" required style="width: 100%; padding: 0.75rem; margin-bottom: 1rem; border-radius: 6px; border: 1px solid #ddd;">
+                    <option value="yonetici">Yönetici</option>
+                    <option value="atayan">Atayan</option>
+                    <option value="atanan">Atanan</option>
+                </select>
+                <input type="password" id="editPassword" name="password" placeholder="Yeni Şifre (boş bırakılabilir)" style="width: 100%; padding: 0.75rem; margin-bottom: 1rem; border-radius: 6px; border: 1px solid #ddd;">
+                <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+                    <button type="button" onclick="closeEditModal()" style="padding: 0.75rem 1.5rem; background: #e0e0e0; color: #333; border: none; border-radius: 6px; cursor: pointer;">İptal</button>
+                    <button type="submit" style="padding: 0.75rem 1.5rem; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer;">Kaydet</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function editUser(id, username, role) {
+            document.getElementById('editModal').style.display = 'flex';
+            document.getElementById('editForm').action = '/users/' + id + '/update';
+            document.getElementById('editUsername').value = username;
+            document.getElementById('editRole').value = role;
+            document.getElementById('editPassword').value = '';
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+        }
+
+        // Modal dışına tıklanınca kapat
+        document.getElementById('editModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeEditModal();
+            }
+        });
+    </script>
+</body>
+</html>

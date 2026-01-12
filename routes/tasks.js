@@ -20,7 +20,7 @@ router.get('/dashboard', requireAuth, async (req, res) => {
     if (role === 'atayan') {
       const myTasks = await db('tasks')
         .where('creator_id', userId)
-        .whereIn('status', ['tamamlanmadi', 'kontrol_ediliyor', 'tamamlandi', 'tamamlanamıyor', 'iade'])
+        .whereIn('status', ['tamamlanmadi', 'kontrol_ediliyor', 'yapiliyor', 'tamamlandi', 'tamamlanamıyor', 'iade'])
         .select('tasks.*');
 
       const forApproval = await db('tasks')
@@ -63,7 +63,7 @@ router.get('/dashboard', requireAuth, async (req, res) => {
       // Yöneticiye atanan görevler (kendisine atadığı görevler)
       const myAssignedTasks = await db('tasks')
         .where('assignee_id', userId)
-        .whereIn('status', ['tamamlanmadi', 'kontrol_ediliyor', 'iade'])
+        .whereIn('status', ['tamamlanmadi', 'yapiliyor', 'kontrol_ediliyor', 'iade'])
         .orderBy('created_at', 'desc')
         .select('tasks.*');
 
@@ -84,11 +84,11 @@ router.get('/dashboard', requireAuth, async (req, res) => {
     } else if (role === 'atanan') {
       const myTasks = await db('tasks')
         .where('assignee_id', userId)
-        .whereIn('status', ['tamamlanmadi', 'kontrol_ediliyor', 'tamamlandi', 'tamamlanamıyor', 'iade'])
+        .whereIn('status', ['tamamlanmadi', 'yapiliyor', 'kontrol_ediliyor', 'tamamlandi', 'tamamlanamıyor', 'iade'])
         .select('tasks.*');
 
       const completed = myTasks.filter(t => t.status === 'tamamlandi' || t.status === 'tamamlanamıyor').length;
-      const inProgress = myTasks.filter(t => t.status === 'kontrol_ediliyor').length;
+      const inProgress = myTasks.filter(t => t.status === 'kontrol_ediliyor' || t.status === 'yapiliyor').length;
       const pending = myTasks.filter(t => t.status === 'tamamlanmadi' || t.status === 'iade').length;
 
       tasks = myTasks;
@@ -102,12 +102,40 @@ router.get('/dashboard', requireAuth, async (req, res) => {
 
     const users = await db('users').select('id', 'username', 'role');
 
+    // Kullanıcı görev istatistikleri (herkes görebilir)
+    const userTaskStats = await db('tasks')
+      .select('assignee_id')
+      .whereNotNull('assignee_id')
+      .whereIn('status', ['tamamlanmadi', 'yapiliyor', 'kontrol_ediliyor', 'iade', 'kontrol_bekleniyor'])
+      .count('id as task_count')
+      .groupBy('assignee_id');
+
+    console.log('📊 User Task Stats:', userTaskStats);
+
+    // Kullanıcı bilgileriyle birleştir
+    const userStats = users
+      .filter(u => u.role === 'atanan' || u.role === 'yonetici')
+      .map(user => {
+        const stat = userTaskStats.find(s => s.assignee_id === user.id);
+        return {
+          id: user.id,
+          username: user.username,
+          role: user.role,
+          taskCount: stat ? parseInt(stat.task_count) : 0
+        };
+      })
+      .sort((a, b) => b.taskCount - a.taskCount); // En çok görevi olan üstte
+
+    console.log('📊 User Stats:', userStats);
+
     // Admin-only: gather adliye list and tasks grouped by adliye
     let adliyeler = [];
     let tasksByAdliye = {};
     if (role === 'yonetici') {
       const raw = await db('tasks').select('adliye').whereNotNull('adliye').whereNot('status', 'arsiv').distinct();
       adliyeler = raw.map(r => r.adliye).filter(a => a);
+      // Ensure 'Ofis' exists as a special adliye for managers
+      if (!adliyeler.includes('Ofis')) adliyeler.unshift('Ofis');
       if (adliyeler.length) {
         for (const a of adliyeler) {
           const rows = await db('tasks').where({ adliye: a }).whereNot('status', 'arsiv').orderBy('created_at', 'desc').select('*');
@@ -156,6 +184,7 @@ router.get('/dashboard', requireAuth, async (req, res) => {
       tasks,
       users,
       stats,
+      userStats,
       adliyeler,
       tasksByAdliye,
       tebligatlar,
@@ -272,7 +301,8 @@ router.post('/tasks/:id/status', requireAuth, async (req, res) => {
       return res.status(403).send('Bu görevi güncelleyemezsiniz');
     }
 
-    // Tamamlandı veya tamamlanamıyor durumunda kontrol_ediliyor yap
+    // Handle special status transitions.
+    // 'yapiliyor' should keep the task with the assignee (no manager assignment).
     let finalStatus = status;
     const updateData = {
       status: finalStatus,
@@ -280,11 +310,15 @@ router.post('/tasks/:id/status', requireAuth, async (req, res) => {
       updated_at: db.fn.now()
     };
 
-    if (status === 'tamamlandi' || status === 'tamamlanamıyor') {
+    if (status === 'yapiliyor') {
+      // leave manager as-is; task remains with assignee
+      finalStatus = 'yapiliyor';
+      updateData.status = finalStatus;
+    } else if (status === 'tamamlandi' || status === 'tamamlanamıyor') {
+      // mark for control and ensure manager is set when needed
       finalStatus = 'kontrol_ediliyor';
       updateData.status = finalStatus;
 
-      // Eğer manager_id yoksa ve yönetici kendisi tamamladıysa, kendisini manager yap
       if (!task.manager_id && role === 'yonetici') {
         updateData.manager_id = req.session.userId;
       }
@@ -383,6 +417,72 @@ router.post('/tasks/:id/control', requireRole('yonetici'), async (req, res) => {
   }
 });
 
+// Move a task to the Office adliye (manager only)
+router.post('/tasks/:id/move-to-office', requireRole('yonetici'), async (req, res) => {
+  const { id } = req.params;
+  const returnTo = req.body.returnTo || 'adliye-listesi';
+  try {
+    const task = await db('tasks').where({ id }).first();
+    if (!task) return res.status(404).send('Görev bulunamadı');
+
+    // Ensure there's a column to store previous adliye; add if missing (SQLite)
+    const cols = await db.raw("PRAGMA table_info('tasks')");
+    const colNames = (cols && cols.rows) ? cols.rows.map(r => r.name) : (Array.isArray(cols) ? cols.map(r=>r.name) : []);
+    if (!colNames.includes('adliye_prev')) {
+      await db.raw("ALTER TABLE tasks ADD COLUMN adliye_prev TEXT");
+    }
+
+    // Save previous adliye and move to Ofis
+    await db('tasks').where({ id }).update({ adliye_prev: task.adliye || null, adliye: 'Ofis', updated_at: db.fn.now() });
+
+    await db('task_history').insert({
+      task_id: id,
+      user_id: req.session.userId,
+      action: 'moved_to_office',
+      details: `Görev Ofise aktarıldı by user ${req.session.userId}`,
+      created_at: db.fn.now()
+    });
+
+    req.session._active = returnTo;
+    return res.redirect('/dashboard');
+  } catch (err) {
+    console.error('Move to office error', err);
+    res.status(500).send('Ofise aktarılamadı: ' + err.message);
+  }
+});
+
+// Move a task from Office back to a specified adliye (manager only)
+router.post('/tasks/:id/move-to-adliye', requireRole('yonetici'), async (req, res) => {
+  const { id } = req.params;
+  // adliye will be restored from adliye_prev if available
+  const returnTo = req.body.returnTo || 'adliye-listesi';
+  try {
+    const task = await db('tasks').where({ id }).first();
+    if (!task) return res.status(404).send('Görev bulunamadı');
+    // Determine target adliye from backup column if present
+    let target = task.adliye_prev || null;
+    if (!target) {
+      return res.status(400).send('Geri alınacak adliye bulunamadı');
+    }
+
+    await db('tasks').where({ id }).update({ adliye: target, adliye_prev: null, updated_at: db.fn.now() });
+
+    await db('task_history').insert({
+      task_id: id,
+      user_id: req.session.userId,
+      action: 'moved_to_adliye',
+      details: `Görev ${target} adliyesine aktarıldı by user ${req.session.userId}`,
+      created_at: db.fn.now()
+    });
+
+    req.session._active = returnTo;
+    return res.redirect('/dashboard');
+  } catch (err) {
+    console.error('Move to adliye error', err);
+    res.status(500).send('Adliyeye aktarılamadı: ' + err.message);
+  }
+});
+
 router.post('/tasks/:id/final-approve', requireRole('atayan', 'yonetici'), async (req, res) => {
   const { id } = req.params;
 
@@ -438,11 +538,52 @@ router.get('/archive', requireAuth, async (req, res) => {
     res.render('archive', { 
       tasks, 
       tebligatArsiv,
-      username: req.session.username 
+      username: req.session.username,
+      role: req.session.userRole,
+      userId: req.session.userId
     });
   } catch (error) {
     console.error('Arşiv hatası:', error);
     res.status(500).send('Arşiv yüklenemedi');
+  }
+});
+
+// Delete an archived task (only 'atayan')
+router.post('/archive/tasks/:id/delete', requireRole('atayan'), async (req, res) => {
+  const { id } = req.params;
+  try {
+    const task = await db('tasks').where({ id }).first();
+    if (!task) return res.status(404).send('Görev bulunamadı');
+    if (task.status !== 'arsiv') return res.status(400).send('Görev arşivde değil');
+
+    await db('task_history').insert({
+      task_id: id,
+      user_id: req.session.userId,
+      action: 'arsivden_silindi',
+      details: `Arşivden silindi: ${task.islem_turu}`,
+      created_at: db.fn.now()
+    });
+
+    await db('tasks').where({ id }).delete();
+    return res.redirect('/archive');
+  } catch (err) {
+    console.error('Arşiv görev silme hatası:', err);
+    res.status(500).send('Arşivden görev silinemedi: ' + err.message);
+  }
+});
+
+// Delete an archived tebligat (only 'atayan')
+router.post('/archive/tebligat/:id/delete', requireRole('atayan'), async (req, res) => {
+  const { id } = req.params;
+  try {
+    const t = await db('tebligat_arsiv').where({ id }).first();
+    if (!t) return res.status(404).send('Tebligat bulunamadı');
+
+    await db('tebligat_arsiv').where({ id }).delete();
+    return res.redirect('/archive');
+  } catch (err) {
+    console.error('Arşiv tebligat silme hatası:', err);
+    res.status(500).send('Arşivden tebligat silinemedi: ' + err.message);
   }
 });
 

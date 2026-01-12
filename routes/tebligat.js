@@ -34,6 +34,7 @@ router.get('/tebligatlar', requireAuth, async (req, res) => {
       username: req.session.username,
       userId: req.session.userId,
       role: req.session.userRole,
+      filterEkleyen: ekleyen || '',
       filters: {
         ekleyen: ekleyen || '',
         icra_dairesi: icra_dairesi || '',
@@ -67,11 +68,28 @@ router.post('/tebligat/create', requireAuth, async (req, res) => {
   }
 });
 
-router.post('/tebligat/:id/update-status', requireRole('yonetici'), async (req, res) => {
+router.post('/tebligat/:id/update-status', requireAuth, async (req, res) => {
   try {
     const id = req.params.id;
     const { durum } = req.body;
-    await db('tebligatlar').where({ id }).update({ durum, updated_by: req.session.userId, updated_at: db.fn.now() });
+    
+    // Eğer durum "tebliğ" ise, arşive taşı
+    if (durum === 'tebliğ') {
+      const tebligat = await db('tebligatlar').where({ id }).first();
+      
+      // Tebligatı arşiv tablosuna ekle
+      await db('tebligat_arsiv').insert({
+        ...tebligat,
+        arsivlenme_tarihi: new Date().toISOString().split('T')[0],
+        arsivleyen: req.session.userId
+      });
+      
+      // Tebligatı sil
+      await db('tebligatlar').where({ id }).del();
+    } else {
+      await db('tebligatlar').where({ id }).update({ durum, updated_by: req.session.userId, updated_at: db.fn.now() });
+    }
+    
     return res.redirect('/tebligatlar');
   } catch (err) {
     console.error('Tebligat durum güncelleme hatası:', err);
@@ -115,7 +133,7 @@ router.post('/tebligat/:id/update-user', requireAuth, async (req, res) => {
   }
 });
 
-router.post('/tebligat/:id/delete', requireRole('yonetici'), async (req, res) => {
+router.post('/tebligat/:id/delete', requireAuth, async (req, res) => {
   try {
     const id = req.params.id;
     await db('tebligatlar').where({ id }).del();

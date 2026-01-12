@@ -108,6 +108,9 @@
                   <th>TCKN/VKN</th>
                   <th>Barkod</th>
                   <th>Durum</th>
+                  <% if (role === 'atayan') { %>
+                    <th>İşlemler</th>
+                  <% } %>
                   <th>Tarih</th>
                   <th>Not</th>
                   <th>Arşivlenme</th>
@@ -150,6 +153,13 @@
                     <td>
                       <%= t.arsivlenme_tarihi %>
                     </td>
+                    <% if (role === 'atayan') { %>
+                      <td>
+                        <form method="POST" action="/archive/tebligat/<%= t.id %>/delete" class="scroll-form" style="margin:0;">
+                          <button type="submit" onclick="return confirm('Bu arşivlenmiş tebligatı kalıcı silmek istiyor musunuz?')" style="padding:0.25rem 0.4rem; background:#ef4444; color:white; border:none; border-radius:6px;">Sil</button>
+                        </form>
+                      </td>
+                    <% } %>
                   </tr>
                   <% }) %>
               </tbody>
@@ -182,6 +192,9 @@
                   <th>Borçlu</th>
                   <th>TCKN</th>
                   <th>Durum</th>
+                  <% if (role === 'atayan') { %>
+                    <th>İşlemler</th>
+                  <% } %>
                   <th>Oluşturulma</th>
                   <th>Arşivlenme</th>
                 </tr>
@@ -227,6 +240,13 @@
                     <td>
                       <%= new Date(task.updated_at).toLocaleDateString('tr-TR') %>
                     </td>
+                    <% if (role === 'atayan') { %>
+                      <td>
+                        <form method="POST" action="/archive/tasks/<%= task.id %>/delete" class="scroll-form" style="margin:0;">
+                          <button type="submit" onclick="return confirm('Bu arşivlenmiş görevi kalıcı silmek istiyor musunuz?')" style="padding:0.25rem 0.4rem; background:#ef4444; color:white; border:none; border-radius:6px;">Sil</button>
+                        </form>
+                      </td>
+                    <% } %>
                   </tr>
                   <% }) %>
               </tbody>
