@@ -13,10 +13,13 @@
   <div class="app-container">
     <aside class="sidebar">
       <div class="sidebar-header">
-        <h2>İcra Takip</h2>
-        <p>
-          <%= username %> (<%= role %>)
-        </p>
+        <img src="/favicon.png" alt="Logo" class="sidebar-logo">
+        <div class="sidebar-header-info">
+          <h2>İCRA TAKİP</h2>
+          <p>
+            <%= username %> (<%= role %>)
+          </p>
+        </div>
       </div>
       <nav class="sidebar-menu">
         <a href="/dashboard" class="menu-item">
@@ -56,30 +59,32 @@
             <label style="display: block; margin-bottom: 0.3rem; font-size: 0.9rem; color: #666;">Durum</label>
             <select name="status" style="width: 100%; padding: 0.5rem; border-radius: 6px; border: 1px solid #ddd;">
               <option value="">Tüm Durumlar</option>
-              <option value="tamamlanmadi" <%= filterStatus === 'tamamlanmadi' ? 'selected' : '' %>>Tamamlanmadı</option>
-              <option value="kontrol_ediliyor" <%= filterStatus === 'kontrol_ediliyor' ? 'selected' : '' %>>Kontrol Ediliyor</option>
-              <option value="son_onay_bekliyor" <%= filterStatus === 'son_onay_bekliyor' ? 'selected' : '' %>>Son Onay Bekliyor</option>
-              <option value="iade" <%= filterStatus === 'iade' ? 'selected' : '' %>>İade</option>
-              <option value="tamamlandi" <%= filterStatus === 'tamamlandi' ? 'selected' : '' %>>Tamamlandı</option>
-              <option value="uygun" <%= filterStatus === 'uygun' ? 'selected' : '' %>>Uygun</option>
+              <option value="tamamlanmadi" <%=filterStatus==='tamamlanmadi' ? 'selected' : '' %>>Tamamlanmadı</option>
+              <option value="kontrol_ediliyor" <%=filterStatus==='kontrol_ediliyor' ? 'selected' : '' %>>Kontrol
+                Ediliyor</option>
+              <option value="son_onay_bekliyor" <%=filterStatus==='son_onay_bekliyor' ? 'selected' : '' %>>Son Onay
+                Bekliyor</option>
+              <option value="iade" <%=filterStatus==='iade' ? 'selected' : '' %>>İade</option>
+              <option value="tamamlandi" <%=filterStatus==='tamamlandi' ? 'selected' : '' %>>Tamamlandı</option>
+              <option value="uygun" <%=filterStatus==='uygun' ? 'selected' : '' %>>Uygun</option>
             </select>
           </div>
           <div style="flex: 1; min-width: 150px;">
             <label style="display: block; margin-bottom: 0.3rem; font-size: 0.9rem; color: #666;">Öncelik</label>
             <select name="oncelik" style="width: 100%; padding: 0.5rem; border-radius: 6px; border: 1px solid #ddd;">
               <option value="">Tüm Öncelikler</option>
-              <option value="acil" <%= filterOncelik === 'acil' ? 'selected' : '' %>>🔥 Acil</option>
-              <option value="rutin" <%= filterOncelik === 'rutin' ? 'selected' : '' %>>📋 Rutin</option>
+              <option value="acil" <%=filterOncelik==='acil' ? 'selected' : '' %>>🔥 Acil</option>
+              <option value="rutin" <%=filterOncelik==='rutin' ? 'selected' : '' %>>📋 Rutin</option>
             </select>
           </div>
           <div style="flex: 1; min-width: 150px;">
             <label style="display: block; margin-bottom: 0.3rem; font-size: 0.9rem; color: #666;">Adliye</label>
-            <input type="text" name="adliye" value="<%= filterAdliye || '' %>" placeholder="Adliye" 
+            <input type="text" name="adliye" value="<%= filterAdliye || '' %>" placeholder="Adliye"
               style="width: 100%; padding: 0.5rem; border-radius: 6px; border: 1px solid #ddd;">
           </div>
           <div style="flex: 1; min-width: 150px;">
             <label style="display: block; margin-bottom: 0.3rem; font-size: 0.9rem; color: #666;">Müvekkil</label>
-            <input type="text" name="muvekkil" value="<%= filterMuvekkil || '' %>" placeholder="Müvekkil" 
+            <input type="text" name="muvekkil" value="<%= filterMuvekkil || '' %>" placeholder="Müvekkil"
               style="width: 100%; padding: 0.5rem; border-radius: 6px; border: 1px solid #ddd;">
           </div>
           <div style="flex: 1; min-width: 150px;">
@@ -87,10 +92,10 @@
             <select name="creator" style="width: 100%; padding: 0.5rem; border-radius: 6px; border: 1px solid #ddd;">
               <option value="">Tümü</option>
               <% users.forEach(function(u) { %>
-                <option value="<%= u.id %>" <%= filterCreator == u.id ? 'selected' : '' %>>
+                <option value="<%= u.id %>" <%=filterCreator==u.id ? 'selected' : '' %>>
                   <%= u.username %>
                 </option>
-              <% }); %>
+                <% }); %>
             </select>
           </div>
           <div style="flex: 1; min-width: 150px;">
@@ -98,15 +103,17 @@
             <select name="assignee" style="width: 100%; padding: 0.5rem; border-radius: 6px; border: 1px solid #ddd;">
               <option value="">Tümü</option>
               <% users.forEach(function(u) { %>
-                <option value="<%= u.id %>" <%= filterAssignee == u.id ? 'selected' : '' %>>
+                <option value="<%= u.id %>" <%=filterAssignee==u.id ? 'selected' : '' %>>
                   <%= u.username %>
                 </option>
-              <% }); %>
+                <% }); %>
             </select>
           </div>
           <div style="display: flex; gap: 0.5rem;">
-            <button type="submit" style="padding: 0.5rem 1.5rem; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer;">Filtrele</button>
-            <a href="/all-tasks" style="padding: 0.5rem 1rem; background: #e0e0e0; color: #333; border: none; border-radius: 6px; text-decoration: none; display: inline-block;">Temizle</a>
+            <button type="submit"
+              style="padding: 0.5rem 1.5rem; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer;">Filtrele</button>
+            <a href="/all-tasks"
+              style="padding: 0.5rem 1rem; background: #e0e0e0; color: #333; border: none; border-radius: 6px; text-decoration: none; display: inline-block;">Temizle</a>
           </div>
         </form>
       </div>
@@ -202,7 +209,7 @@
 
   <script>
     // Scroll pozisyonunu koru
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
       // Sayfa yüklendiğinde kaydedilmiş scroll pozisyonuna dön
       const scrollPos = sessionStorage.getItem('scrollPos');
       if (scrollPos) {
@@ -211,8 +218,8 @@
       }
 
       // Tüm formları dinle ve submit öncesi scroll pozisyonunu kaydet
-      document.querySelectorAll('form').forEach(function(form) {
-        form.addEventListener('submit', function() {
+      document.querySelectorAll('form').forEach(function (form) {
+        form.addEventListener('submit', function () {
           sessionStorage.setItem('scrollPos', window.scrollY);
         });
       });

@@ -41,9 +41,18 @@ body {
   }
 }
 
+.login-logo {
+  width: 100px;
+  height: 100px;
+  object-fit: contain;
+  margin: 0 auto 1rem;
+  display: block;
+  border-radius: 20px;
+}
+
 .login-box h1 {
   color: #667eea;
-  font-size: 2rem;
+  font-size: 1.75rem;
   margin-bottom: 0.5rem;
   text-align: center;
 }
@@ -109,19 +118,37 @@ body {
 }
 
 .sidebar-header {
-  padding: 2rem 1.5rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  padding: 1.5rem;
+  background: white;
+  border-bottom: 1px solid #f0f0f0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.sidebar-logo {
+  width: 120px;
+  height: 120px;
+  object-fit: contain;
+  margin-bottom: 0.75rem;
+  border-radius: 12px;
+}
+
+.sidebar-header-info {
+  width: 100%;
 }
 
 .sidebar-header h2 {
-  font-size: 1.3rem;
-  margin-bottom: 0.5rem;
+  font-size: 1.1rem;
+  color: #2c3e50;
+  margin-bottom: 0.25rem;
 }
 
 .sidebar-header p {
-  font-size: 0.9rem;
-  opacity: 0.9;
+  font-size: 0.85rem;
+  color: #667eea;
+  font-weight: 500;
 }
 
 .sidebar-menu {

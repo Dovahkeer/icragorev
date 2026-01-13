@@ -13,17 +13,20 @@
   <div class="app-container">
     <aside class="sidebar">
       <div class="sidebar-header">
-        <h2>PİT10 GÖREV YÖNETİMİ</h2>
-        <p>
-          <%= username %> (<%= role %>)
-        </p>
+        <img src="/favicon.png" alt="Logo" class="sidebar-logo">
+        <div class="sidebar-header-info">
+          <h2>PİT10 GÖREV YÖNETİMİ</h2>
+          <p>
+            <%= username %> (<%= role %>)
+          </p>
+        </div>
       </div>
       <nav class="sidebar-menu">
         <a href="#" class="menu-item active" onclick="showSection('gorevler')">
           <span class="menu-item-icon">📋</span>
           <span>Görevler</span>
         </a>
-        
+
 
         <% if (role==='atayan' || role==='yonetici' ) { %>
           <a href="#" class="menu-item" onclick="showSection('yeni-gorev')">
@@ -90,7 +93,7 @@
         <p class="breadcrumb">Ana Sayfa / Görevler</p>
       </div>
 
-      <% if (role==='atayan' || role==='yonetici') { %>
+      <% if (role==='atayan' || role==='yonetici' ) { %>
         <section id="dashboard-tebligat" class="section">
           <h2>Tebligat Oluştur</h2>
           <form method="POST" action="/tebligat/create" class="tebligat-form scroll-form">
@@ -109,129 +112,11 @@
             </div>
           </form>
         </section>
-      <% } %>
+        <% } %>
 
-      <!-- İstatistikler -->
-      <div class="stats-grid">
-        <% if (role==='atayan' ) { %>
-          <div class="stat-card">
-            <div class="stat-icon blue">📊</div>
-            <div class="stat-info">
-              <h3>
-                <%= stats.total || 0 %>
-              </h3>
-              <p>Toplam Görev</p>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon green">✅</div>
-            <div class="stat-info">
-              <h3>
-                <%= stats.forApproval || 0 %>
-              </h3>
-              <p>Onay Bekleyen</p>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon orange">⏳</div>
-            <div class="stat-info">
-              <h3>
-                <%= stats.active || 0 %>
-              </h3>
-              <p>Aktif Görev</p>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon purple">📦</div>
-            <div class="stat-info">
-              <h3>
-                <%= stats.archived || 0 %>
-              </h3>
-              <p>Arşivlenen</p>
-            </div>
-          </div>
-          <!-- Kullanıcı başına aktif görev sayıları (Atayan ana ekranda görsün) -->
-          <div class="stat-card" style="flex-basis:100%;">
-            <div class="stat-icon teal">👥</div>
-            <div class="stat-info">
-              <h3>Kullanıcı Aktif Görevleri</h3>
-              <div style="max-height:160px;overflow:auto;margin-top:0.5rem;">
-                <table class="simple-table" style="width:100%;border-collapse:collapse;">
-                  <thead>
-                    <tr><th style="text-align:left;padding:6px">Kullanıcı</th><th style="text-align:right;padding:6px">Aktif</th></tr>
-                  </thead>
-                  <tbody>
-                    <% (userStats || []).forEach(function(u){ %>
-                      <tr>
-                        <td style="padding:6px"><%= u.username %></td>
-                        <td style="padding:6px;text-align:right"><%= u.taskCount %></td>
-                      </tr>
-                    <% }) %>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-          <% } else if (role==='yonetici' ) { %>
-            <div class="stat-card">
-              <div class="stat-icon blue">📊</div>
-              <div class="stat-info">
-                <h3>
-                  <%= stats.total || 0 %>
-                </h3>
-                <p>Toplam Görev</p>
-              </div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-icon orange">👥</div>
-              <div class="stat-info">
-                <h3>
-                  <%= stats.toDistribute || 0 %>
-                </h3>
-                <p>Atama Bekleyen</p>
-              </div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-icon purple">🔍</div>
-              <div class="stat-info">
-                <h3>
-                  <%= stats.forControl || 0 %>
-                </h3>
-                <p>Kontrol Edilecek</p>
-              </div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-icon green">📝</div>
-              <div class="stat-info">
-                <h3>
-                  <%= stats.myAssignedTasks || 0 %>
-                </h3>
-                <p>Bana Atanan</p>
-              </div>
-            </div>
-            <!-- Kullanıcı başına aktif görev sayıları (Yönetici ana ekranda görsün) -->
-            <div class="stat-card" style="flex-basis:100%;">
-              <div class="stat-icon teal">👥</div>
-              <div class="stat-info">
-                <h3>Kullanıcı Aktif Görevleri</h3>
-                <div style="max-height:160px;overflow:auto;margin-top:0.5rem;">
-                  <table class="simple-table" style="width:100%;border-collapse:collapse;">
-                    <thead>
-                      <tr><th style="text-align:left;padding:6px">Kullanıcı</th><th style="text-align:right;padding:6px">Aktif</th></tr>
-                    </thead>
-                    <tbody>
-                      <% (userStats || []).forEach(function(u){ %>
-                        <tr>
-                          <td style="padding:6px"><%= u.username %></td>
-                          <td style="padding:6px;text-align:right"><%= u.taskCount %></td>
-                        </tr>
-                      <% }) %>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-            <% } else if (role==='atanan' ) { %>
+          <!-- İstatistikler -->
+          <div class="stats-grid">
+            <% if (role==='atayan' ) { %>
               <div class="stat-card">
                 <div class="stat-icon blue">📊</div>
                 <div class="stat-info">
@@ -242,403 +127,229 @@
                 </div>
               </div>
               <div class="stat-card">
-                <div class="stat-icon orange">⏳</div>
-                <div class="stat-info">
-                  <h3>
-                    <%= stats.pending || 0 %>
-                  </h3>
-                  <p>Bekleyen</p>
-                </div>
-              </div>
-              <div class="stat-card">
-                <div class="stat-icon purple">🔄</div>
-                <div class="stat-info">
-                  <h3>
-                    <%= stats.inProgress || 0 %>
-                  </h3>
-                  <p>Devam Eden</p>
-                </div>
-              </div>
-              <div class="stat-card">
                 <div class="stat-icon green">✅</div>
                 <div class="stat-info">
                   <h3>
-                    <%= stats.completed || 0 %>
+                    <%= stats.forApproval || 0 %>
                   </h3>
-                  <p>Tamamlanan</p>
+                  <p>Onay Bekleyen</p>
                 </div>
               </div>
-              <% } %>
-      </div>
-
-      <!-- Görevler Bölümü -->
-      <section id="gorevler" class="section active">
-        <h2>
-          <% if (role==='atayan' ) { %>Oluşturduğum Görevler<% } %>
-              <% if (role==='yonetici' ) { %>Tüm Görevler<% } %>
-                  <% if (role==='atanan' ) { %>Görevlerim<% } %>
-        </h2>
-
-        <% if (role==='atanan') { %>
-          <div style="display:flex;gap:0.5rem;align-items:center;margin-bottom:0.75rem;">
-            <select id="filter-gorevler-status" onchange="filterTasks('gorevler')" style="padding:0.4rem;border-radius:6px;border:1px solid #ddd;">
-              <option value="">Tüm Durumlar</option>
-              <option value="tamamlanmadi">Tamamlanmadı</option>
-              <option value="yapiliyor">Yapılıyor</option>
-              <option value="kontrol_ediliyor">Kontrol Ediliyor</option>
-              <option value="tamamlandi">Tamamlandı</option>
-              <option value="iade">İade</option>
-            </select>
-            <select id="filter-gorevler-priority" onchange="filterTasks('gorevler')" style="padding:0.4rem;border-radius:6px;border:1px solid #ddd;">
-              <option value="">Tüm Öncelikler</option>
-              <option value="acil">Acil</option>
-              <option value="rutin">Rutin</option>
-            </select>
-          </div>
-        <% } %>
-
-        <% let displayTasks=[]; if (role==='atayan' && tasks.myTasks) { displayTasks=tasks.myTasks; } else if
-          (role==='yonetici' && tasks.toDistribute) { displayTasks=[...tasks.toDistribute, ...(tasks.forControl || [])];
-          } else if (role==='atanan' && Array.isArray(tasks)) { displayTasks=tasks; } %>
-
-          <% if (displayTasks.length> 0) { %>
-            <% displayTasks.forEach(task=> { %>
-              <div class="task-card <%= task.oncelik === 'acil' ? 'urgent' : '' %>" data-status="<%= task.status %>" data-oncelik="<%= task.oncelik %>" data-section="gorevler">
-                <div class="task-header">
-                  <div>
-                    <h3>
-                      <%= task.islem_turu || 'Görev' %>
-                    </h3>
-                  </div>
-                  <div style="display: flex; gap: 0.5rem; align-items: center;">
-                    <span class="badge <%= task.oncelik === 'acil' ? 'badge-urgent' : 'badge-normal' %>">
-                      <%= task.oncelik ? task.oncelik.toUpperCase() : 'RUTIN' %>
-                    </span>
-                    <% if ((role==='atayan' || role==='yonetici' ) && task.creator_id===userId) { %>
-                      <form method="POST" action="/tasks/<%= task.id %>/delete" class="scroll-form" style="margin: 0;">
-                        <button type="submit" class="delete-btn"
-                          onclick="return confirm('Bu görevi silmek istediğinizden emin misiniz?')"
-                          title="Görevi Sil">🗑️</button>
-                      </form>
-                      <% } %>
-                  </div>
+              <div class="stat-card">
+                <div class="stat-icon orange">⏳</div>
+                <div class="stat-info">
+                  <h3>
+                    <%= stats.active || 0 %>
+                  </h3>
+                  <p>Aktif Görev</p>
                 </div>
-                <p><strong>Adliye:</strong>
-                  <%= task.adliye || '-' %> |
-                    <strong>Müvekkil:</strong>
-                    <%= task.muvekkil || '-' %> |
-                      <strong>Portföy:</strong>
-                      <%= task.portfoy || '-' %>
-                </p>
-                <p><strong>İcra Dairesi:</strong>
-                  <%= task.icra_dairesi || '-' %>
-                </p>
-                <p><strong>Dosya No:</strong>
-                  <%= task.icra_esas_no || '-' %>
-                </p>
-                <% if (task.borclu || task.borclu_tckn_vkn) { %>
-                  <p><strong>Borçlu:</strong>
-                    <%= task.borclu || '-' %>
-                    <% if (task.borclu_tckn_vkn) { %>
-                      | <strong>TCKN:</strong> <%= task.borclu_tckn_vkn %>
-                    <% } %>
-                  </p>
-                  <% } %>
-                    <% if (task.islem_aciklamasi) { %>
-                      <p><strong>Açıklama:</strong>
-                        <%= task.islem_aciklamasi %>
-                      </p>
-                      <% } %>
-                        <p><strong>Durum:</strong>
-                          <%= task.status || 'tamamlanmadi' %>
-                        </p>
-                        <% if (task.eklenme_tarihi) { %>
-                          <p><strong>Tarih:</strong>
-                            <%= task.eklenme_tarihi %>
-                          </p>
-                          <% } %>
-
-                            <% if (role==='atanan' ) { %>
-                              <form method="POST" action="/tasks/<%= task.id %>/status" class="scroll-form" style="margin-top: 0.75rem;">
-                                <input type="hidden" name="returnTo" value="bana-atanan">
-                                <select name="status" required onchange="checkConfirm(this)"
-                                  style="margin-bottom: 0.5rem;">
-                                  <option value="">Durum Değiştir</option>
-                                  <option value="tamamlanmadi" <%=task.status==='tamamlanmadi' ? 'selected' : '' %>
-                                    >Tamamlanmadı</option>
-                                  <option value="kontrol_ediliyor" <%=task.status==='kontrol_ediliyor' ? 'selected' : ''
-                                    %>>Kontrol Ediliyor</option>
-                                  <option value="yapiliyor" <%=task.status==='yapiliyor' ? 'selected' : '' %>>Yapılıyor</option>
-                                  <option value="tamamlandi">Tamamlandı</option>
-                                  <option value="tamamlanamıyor">Tamamlanamıyor</option>
-                                  <option value="iade" <%=task.status==='iade' ? 'selected' : '' %>>İade</option>
-                                </select>
-                                <button type="submit">Güncelle</button>
-                              </form>
-                              <!-- Notes UI -->
-                              <div class="note-controls" style="margin-top:0.5rem;">
-                                <button type="button" class="btn btn-note"
-                                  onclick="toggleNotes('<%= task.id %>','gorevler')">📝 Görev Notu (<%=
-                                    ((historiesByTask && historiesByTask[task.id]) || []).filter(h=>
-                                    h.action==='note').length %>)</button>
-                              </div>
-                              <div class="note-panel" id="notes-gorevler-<%= task.id %>"
-                                style="display:none; margin-top:0.5rem;">
-                                <div class="notes-list">
-                                  <% if (historiesByTask && historiesByTask[task.id]) { %>
-                                    <% historiesByTask[task.id].filter(h => h.action === 'note').forEach(function(h){ %>
-                                      <div class="note-item">
-                                        <div class="note-meta"><strong>
-                                            <%= users.find(function(u){ return u.id===h.user_id; })?.username || 'Anonim' %>
-                                          </strong> · <small>
-                                            <%= new Date(h.created_at).toLocaleString('tr-TR') %>
-                                          </small></div>
-                                        <div class="note-body">
-                                          <%= h.details %>
-                                        </div>
-                                      </div>
-                                    <% }); %>
-                                  <% } %>
-                                </div>
-                                <form method="POST" action="/tasks/<%= task.id %>/note" class="note-form scroll-form">
-                                  <input type="hidden" name="returnTo" value="gorevler">
-                                  <textarea name="note" placeholder="Not ekleyin..." required></textarea>
-                                  <button type="submit" class="btn btn-primary" style="margin-top:0.5rem;">Ekle</button>
-                                </form>
-                              </div>
-                              <% } %>
               </div>
-              <% }) %>
-                <% } else { %>
-                  <div class="empty-state">
-                    <div class="empty-state-icon">📭</div>
-                    <p>Görev bulunamadı</p>
-                  </div>
-                  <% } %>
-      </section>
-
-      <% if (role==='yonetici' ) { %>
-        <!-- Adliye Listesi (Yöneticiler için) -->
-        <section id="adliye-listesi" class="section">
-          <h2>Adliye Listesi</h2>
-          <div class="adliye-container">
-            <aside class="adliye-sidebar">
-              <h4 style="margin-bottom: 1rem; color: #2c3e50;">Adliyeler</h4>
-              <% (adliyeler || []).forEach(function(a, idx){ %>
-                <button type="button" onclick="showAdliye('<%= a %>')"
-                  class="adliye-btn <%= idx === 0 ? 'active' : '' %>">
-                  <span class="adliye-icon">🏛️</span>
-                  <span>
-                    <%= a %>
-                  </span>
-                </button>
-                <% }) %>
-            </aside>
-            <div class="adliye-content">
-              <% (adliyeler || []).forEach(function(a, idx){ %>
-                <div class="adliye-panel" id="adliye-<%= a %>" style="<%= idx === 0 ? '' : 'display:none;' %>">
-                  <div class="adliye-header">
-                    <h3>
-                      <%= a %>
-                    </h3>
-                    <button type="button" onclick="copyTable('tbl-<%= a.replace(/\s+/g,'_') %>')" class="copy-btn">
-                      📋 Tabloyu Kopyala
-                    </button>
-                  </div>
-                  <div class="modern-table-wrapper">
-                    <table id="tbl-<%= a.replace(/\s+/g,'_') %>" class="modern-table">
+              <div class="stat-card">
+                <div class="stat-icon purple">📦</div>
+                <div class="stat-info">
+                  <h3>
+                    <%= stats.archived || 0 %>
+                  </h3>
+                  <p>Arşivlenen</p>
+                </div>
+              </div>
+              <!-- Kullanıcı başına aktif görev sayıları (Atayan ana ekranda görsün) -->
+              <div class="stat-card" style="flex-basis:100%;">
+                <div class="stat-icon teal">👥</div>
+                <div class="stat-info">
+                  <h3>Kullanıcı Aktif Görevleri</h3>
+                  <div style="max-height:160px;overflow:auto;margin-top:0.5rem;">
+                    <table class="simple-table" style="width:100%;border-collapse:collapse;">
                       <thead>
                         <tr>
-                          <th>ID</th>
-                          <th>İşlem Türü</th>
-                          <th>İcra Dairesi</th>
-                          <th>Dosya No</th>
-                          <th>Müvekkil</th>
-                          <th>Portföy</th>
-                          <th>Borçlu</th>
-                              <th>Durum</th>
-                              <% if (role === 'yonetici') { %>
-                                <th>Ofis Aktar</th>
-                              <% } %>
+                          <th style="text-align:left;padding:6px">Kullanıcı</th>
+                          <th style="text-align:right;padding:6px">Aktif</th>
                         </tr>
                       </thead>
                       <tbody>
-                        <% (tasksByAdliye[a] || []).forEach(function(t){ %>
+                        <% (userStats || []).forEach(function(u){ %>
                           <tr>
-                            <td><span class="id-badge">#<%= t.id %></span></td>
-                            <td><strong>
-                                <%= t.islem_turu %>
-                              </strong></td>
-                            <td>
-                              <%= t.icra_dairesi || '-' %>
+                            <td style="padding:6px">
+                              <%= u.username %>
                             </td>
-                            <td><strong style="color: #667eea;">
-                                <%= t.icra_esas_no || '-' %>
-                              </strong></td>
-                            <td>
-                              <%= t.muvekkil %>
+                            <td style="padding:6px;text-align:right">
+                              <%= u.taskCount %>
                             </td>
-                            <td>
-                              <%= t.portfoy %>
-                            </td>
-                            <td>
-                              <%= t.borclu || '-' %>
-                            </td>
-                            <td><span class="status-badge status-<%= t.status %>">
-                                <%= t.status %>
-                              </span></td>
-                            <% if (role === 'yonetici') { %>
-                              <td>
-                                <% if (a !== 'Ofis') { %>
-                                  <form method="POST" action="/tasks/<%= t.id %>/move-to-office" class="scroll-form" style="margin:0;">
-                                    <input type="hidden" name="returnTo" value="adliye-listesi">
-                                    <button type="submit" style="padding:0.25rem 0.5rem; background:#f59e0b; color:white; border:none; border-radius:6px;">Ofise Aktar</button>
-                                  </form>
-                                <% } else { %>
-                                  <form method="POST" action="/tasks/<%= t.id %>/move-to-adliye" class="scroll-form" style="margin:0; display:flex; gap:0.5rem; align-items:center;">
-                                    <input type="hidden" name="returnTo" value="adliye-listesi">
-                                    <button type="submit" style="padding:0.25rem 0.5rem; background:#10b981; color:white; border:none; border-radius:6px;">Adliyeye Geri Aktar</button>
-                                  </form>
-                                <% } %>
-                              </td>
-                            <% } %>
                           </tr>
                           <% }) %>
                       </tbody>
                     </table>
                   </div>
                 </div>
-                <% }) %>
-            </div>
-          </div>
-        </section>
-        <% } %>
-
-
-
-
-
-          <% if (role==='atayan' || role==='yonetici' ) { %>
-            <!-- Yeni Görev Oluştur -->
-            <section id="yeni-gorev" class="section">
-              <h2>Yeni Görev Oluştur</h2>
-              <form method="POST" action="/tasks/create" class="task-form scroll-form">
-                <input type="hidden" name="returnTo" value="yeni-gorev">
-
-                <select name="muvekkil" required>
-                  <option value="">Müvekkil Seçin *</option>
-                  <option value="GSD">GSD</option>
-                  <option value="Doğru">Doğru</option>
-                  <option value="Sümer">Sümer</option>
-                  <option value="Ulusal">Ulusal</option>
-                  <option value="Birikim">Birikim</option>
-                  <option value="Emir">Emir</option>
-                  <option value="Birleşim">Birleşim</option>
-                </select>
-
-                <select name="portfoy" required>
-                  <option value="">Portföy Seçin *</option>
-                  <option value="Fiba 01">Fiba 01</option>
-                  <option value="Fiba 02">Fiba 02</option>
-                  <option value="Fiba 03">Fiba 03</option>
-                  <option value="Fiba 04">Fiba 04</option>
-                  <option value="Anadolu">Anadolu</option>
-                  <option value="YKB 01">YKB 01</option>
-                  <option value="YKB 02">YKB 02</option>
-                  <option value="YKB 03">YKB 03</option>
-                  <option value="YKB 04">YKB 04</option>
-                  <option value="İşbank Bireysel 01">İşbank Bireysel 01</option>
-                  <option value="İşbank Bireysel 02">İşbank Bireysel 02</option>
-                  <option value="İşbank 01">İşbank 01</option>
-                  <option value="İşbank 02">İşbank 02</option>
-                  <option value="İşbank 03">İşbank 03</option>
-                  <option value="Şeker">Şeker</option>
-                  <option value="Garantibank">Garantibank</option>
-                  <option value="Garanti Faktöring">Garanti Faktöring</option>
-                  <option value="İNG">İNG</option>
-                </select>
-
-                <input type="text" name="borclu" placeholder="Borçlu">
-                <input type="text" name="borclu_tckn_vkn" placeholder="Borçlu TCKN-VKN">
-                <input type="text" name="icra_dairesi" placeholder="İcra Dairesi *" required>
-                <input type="text" name="icra_esas_no" placeholder="İcra Esas Numarası">
-
-                <select name="islem_turu" required>
-                  <option value="">İşlem Türü Seçin *</option>
-                  <option value="Kesinleştirme Yapılacak">Kesinleştirme Yapılacak</option>
-                  <option value="Tebligat Çıkarılacak">Tebligat Çıkarılacak</option>
-                  <option value="Taşınmaz Haczi">Taşınmaz Haczi</option>
-                  <option value="Araç Haczi">Araç Haczi</option>
-                  <option value="Dosya Yenileme">Dosya Yenileme</option>
-                  <option value="Banka Blokesi">Banka Blokesi</option>
-                  <option value="Maaş Haczi">Maaş Haczi</option>
-                  <option value="Mazbatalar Taratılacak">Mazbatalar Taratılacak</option>
-                  <option value="Vekil Kaydı">Vekil Kaydı</option>
-                  <option value="İade İstenecek">İade İstenecek</option>
-                  <option value="Rehin Açığı Belgesi Alınacak">Rehin Açığı Belgesi Alınacak</option>
-                  <option value="Reddiyat Yapılacak">Reddiyat Yapılacak</option>
-                  <option value="Takip Başlatılacak">Takip Başlatılacak</option>
-                  <option value="Eksik Evraklar Taratılacak">Eksik Evraklar Taratılacak</option>
-                  <option value="Tebliagata Yarar Adres İstenecek">Tebliagata Yarar Adres İstenecek</option>
-                  <option value="Borçlu Bilgileri Eklenecek">Borçlu Bilgileri Eklenecek</option>
-                  <option value="Kuruma 89/1 Gönderilecek">Kuruma 89/1 Gönderilecek</option>
-                  <option value="Taraf Kaydı Düzeltilecek">Taraf Kaydı Düzeltilecek</option>
-                  <option value="Yeni Esas Alınacak">Yeni Esas Alınacak</option>
-                  <option value="Ödeme Emri Düzenlenecek">Ödeme Emri Düzenlenecek</option>
-                  <option value="Borçlu Eklenecek">Borçlu Eklenecek</option>
-                  <option value="Alacaklı olduğu icra dosyasına haciz konulacak">Alacaklı olduğu icra dosyasına
-                    haciz
-                    konulacak</option>
-                </select>
-
-                <textarea name="islem_aciklamasi" placeholder="İşlem Açıklaması *" required></textarea>
-
-                <select name="oncelik" required>
-                  <option value="rutin">Rutin</option>
-                  <option value="acil">Acil</option>
-                </select>
-
-                <input type="date" name="eklenme_tarihi" value="<%= new Date().toISOString().split('T')[0] %>">
-
-                <button type="submit">Görev Oluştur</button>
-              </form>
-            </section>
-
-            <!-- Excel Yükle -->
-            <section id="excel-yukle" class="section">
-              <h2>Excel'den Toplu Yükle</h2>
-              <div style="margin-bottom: 1.5rem;">
-                <a href="/download-template" class="download-btn">📥 Excel Şablonu İndir</a>
               </div>
-              <form method="POST" action="/upload-excel" enctype="multipart/form-data" class="task-form scroll-form">
-                <input type="file" name="excelFile" accept=".xlsx,.xls" required>
-                <button type="submit">Excel Yükle</button>
-              </form>
-              <p class="info">Kolonlar: Müvekkil, Portföy, Borçlu, Borçlu TCKN-VKN, İcra Dairesi, İcra Esas
-                Numarası,
-                İŞLEM TÜRÜ, İşlem AÇIKLAMASI, ÖNCELİK, Eklenme Tarihi</p>
-            </section>
-            <% } %>
+              <% } else if (role==='yonetici' ) { %>
+                <div class="stat-card">
+                  <div class="stat-icon blue">📊</div>
+                  <div class="stat-info">
+                    <h3>
+                      <%= stats.total || 0 %>
+                    </h3>
+                    <p>Toplam Görev</p>
+                  </div>
+                </div>
+                <div class="stat-card">
+                  <div class="stat-icon orange">👥</div>
+                  <div class="stat-info">
+                    <h3>
+                      <%= stats.toDistribute || 0 %>
+                    </h3>
+                    <p>Atama Bekleyen</p>
+                  </div>
+                </div>
+                <div class="stat-card">
+                  <div class="stat-icon purple">🔍</div>
+                  <div class="stat-info">
+                    <h3>
+                      <%= stats.forControl || 0 %>
+                    </h3>
+                    <p>Kontrol Edilecek</p>
+                  </div>
+                </div>
+                <div class="stat-card">
+                  <div class="stat-icon green">📝</div>
+                  <div class="stat-info">
+                    <h3>
+                      <%= stats.myAssignedTasks || 0 %>
+                    </h3>
+                    <p>Bana Atanan</p>
+                  </div>
+                </div>
+                <!-- Kullanıcı başına aktif görev sayıları (Yönetici ana ekranda görsün) -->
+                <div class="stat-card" style="flex-basis:100%;">
+                  <div class="stat-icon teal">👥</div>
+                  <div class="stat-info">
+                    <h3>Kullanıcı Aktif Görevleri</h3>
+                    <div style="max-height:160px;overflow:auto;margin-top:0.5rem;">
+                      <table class="simple-table" style="width:100%;border-collapse:collapse;">
+                        <thead>
+                          <tr>
+                            <th style="text-align:left;padding:6px">Kullanıcı</th>
+                            <th style="text-align:right;padding:6px">Aktif</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <% (userStats || []).forEach(function(u){ %>
+                            <tr>
+                              <td style="padding:6px">
+                                <%= u.username %>
+                              </td>
+                              <td style="padding:6px;text-align:right">
+                                <%= u.taskCount %>
+                              </td>
+                            </tr>
+                            <% }) %>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+                <% } else if (role==='atanan' ) { %>
+                  <div class="stat-card">
+                    <div class="stat-icon blue">📊</div>
+                    <div class="stat-info">
+                      <h3>
+                        <%= stats.total || 0 %>
+                      </h3>
+                      <p>Toplam Görev</p>
+                    </div>
+                  </div>
+                  <div class="stat-card">
+                    <div class="stat-icon orange">⏳</div>
+                    <div class="stat-info">
+                      <h3>
+                        <%= stats.pending || 0 %>
+                      </h3>
+                      <p>Bekleyen</p>
+                    </div>
+                  </div>
+                  <div class="stat-card">
+                    <div class="stat-icon purple">🔄</div>
+                    <div class="stat-info">
+                      <h3>
+                        <%= stats.inProgress || 0 %>
+                      </h3>
+                      <p>Devam Eden</p>
+                    </div>
+                  </div>
+                  <div class="stat-card">
+                    <div class="stat-icon green">✅</div>
+                    <div class="stat-info">
+                      <h3>
+                        <%= stats.completed || 0 %>
+                      </h3>
+                      <p>Tamamlanan</p>
+                    </div>
+                  </div>
+                  <% } %>
+          </div>
 
-              <% if (role==='atayan' ) { %>
-                <!-- Son Onay Bekleyen -->
-                <section id="onay-bekleyen" class="section">
-                  <h2>Son Onay Bekleyen Görevler</h2>
-                  <% if (tasks.forApproval && tasks.forApproval.length> 0) { %>
-                    <% tasks.forApproval.forEach(task=> { %>
-                      <div class="task-card <%= task.oncelik === 'acil' ? 'urgent' : '' %>">
+          <!-- Görevler Bölümü -->
+          <section id="gorevler" class="section active">
+            <h2>
+              <% if (role==='atayan' ) { %>Oluşturduğum Görevler<% } %>
+                  <% if (role==='yonetici' ) { %>Tüm Görevler<% } %>
+                      <% if (role==='atanan' ) { %>Görevlerim<% } %>
+            </h2>
+
+            <% if (role==='atanan' ) { %>
+              <div style="display:flex;gap:0.5rem;align-items:center;margin-bottom:0.75rem;">
+                <select id="filter-gorevler-status" onchange="filterTasks('gorevler')"
+                  style="padding:0.4rem;border-radius:6px;border:1px solid #ddd;">
+                  <option value="">Tüm Durumlar</option>
+                  <option value="tamamlanmadi">Tamamlanmadı</option>
+                  <option value="yapiliyor">Yapılıyor</option>
+                  
+                  <option value="tamamlandi">Tamamlandı</option>
+                  <option value="iade">İade</option>
+                </select>
+                <select id="filter-gorevler-priority" onchange="filterTasks('gorevler')"
+                  style="padding:0.4rem;border-radius:6px;border:1px solid #ddd;">
+                  <option value="">Tüm Öncelikler</option>
+                  <option value="acil">Acil</option>
+                  <option value="rutin">Rutin</option>
+                </select>
+              </div>
+              <% } %>
+
+                <% let displayTasks=[]; if (role==='atayan' && tasks.myTasks) { displayTasks=tasks.myTasks; } else if
+                  (role==='yonetici' && tasks.toDistribute) { displayTasks=[...tasks.toDistribute, ...(tasks.forControl
+                  || [])]; } else if (role==='atanan' && Array.isArray(tasks)) { displayTasks=tasks; } %>
+
+                  <% if (displayTasks.length> 0) { %>
+                    <% displayTasks.forEach(task=> { %>
+                      <div class="task-card <%= task.oncelik === 'acil' ? 'urgent' : '' %>"
+                        data-status="<%= task.status %>" data-oncelik="<%= task.oncelik %>" data-section="gorevler">
                         <div class="task-header">
-                          <h3>
-                            <%= task.islem_turu %>
-                          </h3>
-                          <span class="badge <%= task.oncelik === 'acil' ? 'badge-urgent' : 'badge-normal' %>">
-                            <%= task.oncelik.toUpperCase() %>
-                          </span>
+                          <div>
+                            <h3>
+                              <%= task.islem_turu || 'Görev' %>
+                            </h3>
+                          </div>
+                          <div style="display: flex; gap: 0.5rem; align-items: center;">
+                            <span class="badge <%= task.oncelik === 'acil' ? 'badge-urgent' : 'badge-normal' %>">
+                              <%= task.oncelik ? task.oncelik.toUpperCase() : 'RUTIN' %>
+                            </span>
+                            <% if ((role==='atayan' || role==='yonetici' ) && task.creator_id===userId) { %>
+                              <form method="POST" action="/tasks/<%= task.id %>/delete" class="scroll-form"
+                                style="margin: 0;">
+                                <button type="submit" class="delete-btn"
+                                  onclick="return confirm('Bu görevi silmek istediğinizden emin misiniz?')"
+                                  title="Görevi Sil">🗑️</button>
+                              </form>
+                              <% } %>
+                          </div>
                         </div>
                         <p><strong>Adliye:</strong>
-                          <%= task.adliye %> | <strong>Müvekkil:</strong>
-                            <%= task.muvekkil %> | <strong>Portföy:</strong>
-                              <%= task.portfoy %>
+                          <%= task.adliye || '-' %> |
+                            <strong>Müvekkil:</strong>
+                            <%= task.muvekkil || '-' %> |
+                              <strong>Portföy:</strong>
+                              <%= task.portfoy || '-' %>
                         </p>
                         <p><strong>İcra Dairesi:</strong>
                           <%= task.icra_dairesi || '-' %>
@@ -649,204 +360,304 @@
                         <% if (task.borclu || task.borclu_tckn_vkn) { %>
                           <p><strong>Borçlu:</strong>
                             <%= task.borclu || '-' %>
-                            <% if (task.borclu_tckn_vkn) { %>
-                              | <strong>TCKN:</strong> <%= task.borclu_tckn_vkn %>
-                            <% } %>
+                              <% if (task.borclu_tckn_vkn) { %>
+                                | <strong>TCKN:</strong>
+                                <%= task.borclu_tckn_vkn %>
+                                  <% } %>
                           </p>
                           <% } %>
-                            <p><strong>Açıklama:</strong>
-                              <%= task.islem_aciklamasi %>
-                            </p>
-                            <% if (task.assignee_id) { %>
-                              <p><strong>Atanan:</strong>
-                                <%= users.find(u=> u.id === task.assignee_id)?.username || '-' %>
+                            <% if (task.islem_aciklamasi) { %>
+                              <p><strong>Açıklama:</strong>
+                                <%= task.islem_aciklamasi %>
                               </p>
                               <% } %>
-                                <div style="display: flex; gap: 0.5rem; margin-top: 0.75rem;">
-                                    <form method="POST" action="/tasks/<%= task.id %>/final-approve" class="scroll-form"
-                                    style="display:inline; margin: 0;">
-                                    <input type="hidden" name="returnTo" value="onay-bekleyen">
-                                    <button type="submit" class="btn-approve"
-                                      onclick="return confirm('Görevi onaylayıp arşivlemek istediğinizden emin misiniz?')">✅
-                                      Son Onay Ver</button>
-                                  </form>
-                                    <form method="POST" action="/tasks/<%= task.id %>/control" class="scroll-form"
-                                    style="display:inline; margin: 0;">
-                                    <input type="hidden" name="returnTo" value="onay-bekleyen">
-                                    <input type="hidden" name="control_status" value="iade">
-                                    <button type="submit" class="btn-return"
-                                      onclick="return confirm('Görevi atanana iade etmek istediğinizden emin misiniz?')">↩️
-                                      İade Et</button>
-                                  </form>
-                                </div>
-                                <!-- Notes UI -->
-                                <div class="note-controls" style="margin-top:0.5rem;">
-                                  <button type="button" class="btn btn-note"
-                                    onclick="toggleNotes('<%= task.id %>','onay-bekleyen')">📝 Görev Notu (<%=
-                                      ((historiesByTask && historiesByTask[task.id]) || []).filter(h=>
-                                      h.action==='note').length %>)</button>
-                                </div>
-                                <div class="note-panel" id="notes-onay-bekleyen-<%= task.id %>"
-                                  style="display:none; margin-top:0.5rem;">
-                                  <div class="notes-list">
-                                    <% if (historiesByTask && historiesByTask[task.id]) { %>
-                                      <% historiesByTask[task.id].filter(h => h.action === 'note').forEach(function(h){ %>
-                                        <div class="note-item">
-                                          <div class="note-meta"><strong>
-                                              <%= users.find(function(u){ return u.id===h.user_id; })?.username || 'Anonim' %>
-                                            </strong> · <small>
-                                              <%= new Date(h.created_at).toLocaleString('tr-TR') %>
-                                            </small></div>
-                                          <div class="note-body">
-                                            <%= h.details %>
-                                          </div>
+                                <p><strong>Durum:</strong>
+                                  <%= task.status || 'tamamlanmadi' %>
+                                </p>
+                                <% if (task.eklenme_tarihi) { %>
+                                  <p><strong>Tarih:</strong>
+                                    <%= task.eklenme_tarihi %>
+                                  </p>
+                                  <% } %>
+
+                                    <% if (role==='atanan' ) { %>
+                                      <form method="POST" action="/tasks/<%= task.id %>/status" class="scroll-form"
+                                        style="margin-top: 0.75rem;">
+                                        <input type="hidden" name="returnTo" value="bana-atanan">
+                                        <select name="status" required onchange="checkConfirm(this)"
+                                          style="margin-bottom: 0.5rem;">
+                                          <option value="">Durum Değiştir</option>
+                                          <option value="yapiliyor" <%=task.status==='yapiliyor' ? 'selected' : '' %>>Yapılıyor</option>
+                                          <option value="tamamlandi">Tamamlandı</option>
+                                          <option value="tamamlanamıyor">Tamamlanamıyor</option>
+                                          <option value="iade" <%=task.status==='iade' ? 'selected' : '' %>>İade
+                                          </option>
+                                        </select>
+                                        <button type="submit">Güncelle</button>
+                                      </form>
+                                      <!-- Notes UI -->
+                                      <div class="note-controls" style="margin-top:0.5rem;">
+                                        <button type="button" class="btn btn-note"
+                                          onclick="toggleNotes('<%= task.id %>','gorevler')">📝 Görev Notu (<%=
+                                            ((historiesByTask && historiesByTask[task.id]) || []).filter(h=>
+                                            h.action==='note').length %>)</button>
+                                      </div>
+                                      <div class="note-panel" id="notes-gorevler-<%= task.id %>"
+                                        style="display:none; margin-top:0.5rem;">
+                                        <div class="notes-list">
+                                          <% if (historiesByTask && historiesByTask[task.id]) { %>
+                                            <% historiesByTask[task.id].filter(h=> h.action ===
+                                              'note').forEach(function(h){ %>
+                                              <div class="note-item">
+                                                <div class="note-meta"><strong>
+                                                    <%= users.find(function(u){ return u.id===h.user_id; })?.username
+                                                      || 'Anonim' %>
+                                                  </strong> · <small>
+                                                    <%= new Date(h.created_at).toLocaleString('tr-TR') %>
+                                                  </small></div>
+                                                <div class="note-body">
+                                                  <%= h.details %>
+                                                </div>
+                                              </div>
+                                              <% }); %>
+                                                <% } %>
                                         </div>
-                                      <% }); %>
-                                    <% } %>
-                                  </div>
-                                  <form method="POST" action="/tasks/<%= task.id %>/note" class="note-form scroll-form">
-                                    <input type="hidden" name="returnTo" value="onay-bekleyen">
-                                    <textarea name="note" placeholder="Not ekleyin..." required></textarea>
-                                    <button type="submit" class="btn btn-primary" style="margin-top:0.5rem;">Ekle</button>
-                                  </form>
-                                </div>
+                                        <form method="POST" action="/tasks/<%= task.id %>/note"
+                                          class="note-form scroll-form">
+                                          <input type="hidden" name="returnTo" value="gorevler">
+                                          <textarea name="note" placeholder="Not ekleyin..." required></textarea>
+                                          <button type="submit" class="btn btn-primary"
+                                            style="margin-top:0.5rem;">Ekle</button>
+                                        </form>
+                                      </div>
+                                      <% } %>
                       </div>
                       <% }) %>
                         <% } else { %>
                           <div class="empty-state">
-                            <div class="empty-state-icon">✅</div>
-                            <p>Onay bekleyen görev yok</p>
+                            <div class="empty-state-icon">📭</div>
+                            <p>Görev bulunamadı</p>
                           </div>
                           <% } %>
+          </section>
+
+          <% if (role==='yonetici' ) { %>
+            <!-- Adliye Listesi (Yöneticiler için) -->
+            <section id="adliye-listesi" class="section">
+              <h2>Adliye Listesi</h2>
+              <div class="adliye-container">
+                <aside class="adliye-sidebar">
+                  <h4 style="margin-bottom: 1rem; color: #2c3e50;">Adliyeler</h4>
+                  <% (adliyeler || []).forEach(function(a, idx){ %>
+                    <button type="button" onclick="showAdliye('<%= a %>')"
+                      class="adliye-btn <%= idx === 0 ? 'active' : '' %>">
+                      <span class="adliye-icon">🏛️</span>
+                      <span>
+                        <%= a %>
+                      </span>
+                    </button>
+                    <% }) %>
+                </aside>
+                <div class="adliye-content">
+                  <% (adliyeler || []).forEach(function(a, idx){ %>
+                    <div class="adliye-panel" id="adliye-<%= a %>" style="<%= idx === 0 ? '' : 'display:none;' %>">
+                      <div class="adliye-header">
+                        <h3>
+                          <%= a %>
+                        </h3>
+                        <button type="button" onclick="copyTable('tbl-<%= a.replace(/\s+/g,'_') %>')" class="copy-btn">
+                          📋 Tabloyu Kopyala
+                        </button>
+                      </div>
+                      <div class="modern-table-wrapper">
+                        <table id="tbl-<%= a.replace(/\s+/g,'_') %>" class="modern-table">
+                          <thead>
+                            <tr>
+                              <th>ID</th>
+                              <th>İşlem Türü</th>
+                              <th>İcra Dairesi</th>
+                              <th>Dosya No</th>
+                              <th>Müvekkil</th>
+                              <th>Portföy</th>
+                              <th>Borçlu</th>
+                              <th>Durum</th>
+                              <% if (role==='yonetici' ) { %>
+                                <th>Ofis Aktar</th>
+                                <% } %>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <% (tasksByAdliye[a] || []).forEach(function(t){ %>
+                              <tr>
+                                <td><span class="id-badge">#<%= t.id %></span></td>
+                                <td><strong>
+                                    <%= t.islem_turu %>
+                                  </strong></td>
+                                <td>
+                                  <%= t.icra_dairesi || '-' %>
+                                </td>
+                                <td><strong style="color: #667eea;">
+                                    <%= t.icra_esas_no || '-' %>
+                                  </strong></td>
+                                <td>
+                                  <%= t.muvekkil %>
+                                </td>
+                                <td>
+                                  <%= t.portfoy %>
+                                </td>
+                                <td>
+                                  <%= t.borclu || '-' %>
+                                </td>
+                                <td><span class="status-badge status-<%= t.status %>">
+                                    <%= t.status %>
+                                  </span></td>
+                                <% if (role==='yonetici' ) { %>
+                                  <td>
+                                    <% if (a !=='Ofis' ) { %>
+                                      <form method="POST" action="/tasks/<%= t.id %>/move-to-office" class="scroll-form"
+                                        style="margin:0;">
+                                        <input type="hidden" name="returnTo" value="adliye-listesi">
+                                        <button type="submit"
+                                          style="padding:0.25rem 0.5rem; background:#f59e0b; color:white; border:none; border-radius:6px;">Ofise
+                                          Aktar</button>
+                                      </form>
+                                      <% } else { %>
+                                        <form method="POST" action="/tasks/<%= t.id %>/move-to-adliye"
+                                          class="scroll-form"
+                                          style="margin:0; display:flex; gap:0.5rem; align-items:center;">
+                                          <input type="hidden" name="returnTo" value="adliye-listesi">
+                                          <button type="submit"
+                                            style="padding:0.25rem 0.5rem; background:#10b981; color:white; border:none; border-radius:6px;">Adliyeye
+                                            Geri Aktar</button>
+                                        </form>
+                                        <% } %>
+                                  </td>
+                                  <% } %>
+                              </tr>
+                              <% }) %>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                    <% }) %>
+                </div>
+              </div>
+            </section>
+            <% } %>
+
+
+
+
+
+              <% if (role==='atayan' || role==='yonetici' ) { %>
+                <!-- Yeni Görev Oluştur -->
+                <section id="yeni-gorev" class="section">
+                  <h2>Yeni Görev Oluştur</h2>
+                  <form method="POST" action="/tasks/create" class="task-form scroll-form">
+                    <input type="hidden" name="returnTo" value="yeni-gorev">
+
+                    <select name="muvekkil" required>
+                      <option value="">Müvekkil Seçin *</option>
+                      <option value="GSD">GSD</option>
+                      <option value="Doğru">Doğru</option>
+                      <option value="Sümer">Sümer</option>
+                      <option value="Ulusal">Ulusal</option>
+                      <option value="Birikim">Birikim</option>
+                      <option value="Emir">Emir</option>
+                      <option value="Birleşim">Birleşim</option>
+                    </select>
+
+                    <select name="portfoy" required>
+                      <option value="">Portföy Seçin *</option>
+                      <option value="Fiba 01">Fiba 01</option>
+                      <option value="Fiba 02">Fiba 02</option>
+                      <option value="Fiba 03">Fiba 03</option>
+                      <option value="Fiba 04">Fiba 04</option>
+                      <option value="Anadolu">Anadolu</option>
+                      <option value="YKB 01">YKB 01</option>
+                      <option value="YKB 02">YKB 02</option>
+                      <option value="YKB 03">YKB 03</option>
+                      <option value="YKB 04">YKB 04</option>
+                      <option value="İşbank Bireysel 01">İşbank Bireysel 01</option>
+                      <option value="İşbank Bireysel 02">İşbank Bireysel 02</option>
+                      <option value="İşbank 01">İşbank 01</option>
+                      <option value="İşbank 02">İşbank 02</option>
+                      <option value="İşbank 03">İşbank 03</option>
+                      <option value="Şeker">Şeker</option>
+                      <option value="Garantibank">Garantibank</option>
+                      <option value="Garanti Faktöring">Garanti Faktöring</option>
+                      <option value="İNG">İNG</option>
+                    </select>
+
+                    <input type="text" name="borclu" placeholder="Borçlu">
+                    <input type="text" name="borclu_tckn_vkn" placeholder="Borçlu TCKN-VKN">
+                    <input type="text" name="icra_dairesi" placeholder="İcra Dairesi *" required>
+                    <input type="text" name="icra_esas_no" placeholder="İcra Esas Numarası">
+
+                    <select name="islem_turu" required>
+                      <option value="">İşlem Türü Seçin *</option>
+                      <option value="Kesinleştirme Yapılacak">Kesinleştirme Yapılacak</option>
+                      <option value="Tebligat Çıkarılacak">Tebligat Çıkarılacak</option>
+                      <option value="Taşınmaz Haczi">Taşınmaz Haczi</option>
+                      <option value="Araç Haczi">Araç Haczi</option>
+                      <option value="Dosya Yenileme">Dosya Yenileme</option>
+                      <option value="Banka Blokesi">Banka Blokesi</option>
+                      <option value="Maaş Haczi">Maaş Haczi</option>
+                      <option value="Mazbatalar Taratılacak">Mazbatalar Taratılacak</option>
+                      <option value="Vekil Kaydı">Vekil Kaydı</option>
+                      <option value="İade İstenecek">İade İstenecek</option>
+                      <option value="Rehin Açığı Belgesi Alınacak">Rehin Açığı Belgesi Alınacak</option>
+                      <option value="Reddiyat Yapılacak">Reddiyat Yapılacak</option>
+                      <option value="Takip Başlatılacak">Takip Başlatılacak</option>
+                      <option value="Eksik Evraklar Taratılacak">Eksik Evraklar Taratılacak</option>
+                      <option value="Tebliagata Yarar Adres İstenecek">Tebliagata Yarar Adres İstenecek</option>
+                      <option value="Borçlu Bilgileri Eklenecek">Borçlu Bilgileri Eklenecek</option>
+                      <option value="Kuruma 89/1 Gönderilecek">Kuruma 89/1 Gönderilecek</option>
+                      <option value="Taraf Kaydı Düzeltilecek">Taraf Kaydı Düzeltilecek</option>
+                      <option value="Yeni Esas Alınacak">Yeni Esas Alınacak</option>
+                      <option value="Ödeme Emri Düzenlenecek">Ödeme Emri Düzenlenecek</option>
+                      <option value="Borçlu Eklenecek">Borçlu Eklenecek</option>
+                      <option value="Alacaklı olduğu icra dosyasına haciz konulacak">Alacaklı olduğu icra dosyasına
+                        haciz
+                        konulacak</option>
+                    </select>
+
+                    <textarea name="islem_aciklamasi" placeholder="İşlem Açıklaması *" required></textarea>
+
+                    <select name="oncelik" required>
+                      <option value="rutin">Rutin</option>
+                      <option value="acil">Acil</option>
+                    </select>
+
+                    <input type="date" name="eklenme_tarihi" value="<%= new Date().toISOString().split('T')[0] %>">
+
+                    <button type="submit">Görev Oluştur</button>
+                  </form>
+                </section>
+
+                <!-- Excel Yükle -->
+                <section id="excel-yukle" class="section">
+                  <h2>Excel'den Toplu Yükle</h2>
+                  <div style="margin-bottom: 1.5rem;">
+                    <a href="/download-template" class="download-btn">📥 Excel Şablonu İndir</a>
+                  </div>
+                  <form method="POST" action="/upload-excel" enctype="multipart/form-data"
+                    class="task-form scroll-form">
+                    <input type="file" name="excelFile" accept=".xlsx,.xls" required>
+                    <button type="submit">Excel Yükle</button>
+                  </form>
+                  <p class="info">Kolonlar: Müvekkil, Portföy, Borçlu, Borçlu TCKN-VKN, İcra Dairesi, İcra Esas
+                    Numarası,
+                    İŞLEM TÜRÜ, İşlem AÇIKLAMASI, ÖNCELİK, Eklenme Tarihi</p>
                 </section>
                 <% } %>
 
-                  <% if (role==='yonetici' ) { %>
-                    <!-- Bana Atanan Görevler -->
-                    <section id="bana-atanan" class="section">
-                      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                        <h2>Bana Atanan Görevler (<%= tasks.myAssignedTasks ? tasks.myAssignedTasks.length : 0 %>)</h2>
-                        <select id="filter-bana-atanan" onchange="filterTasks('bana-atanan')" style="padding: 0.5rem; border-radius: 6px; border: 1px solid #ddd;">
-                          <option value="">Tüm Durumlar</option>
-                          <option value="tamamlanmadi">Tamamlanmadı</option>
-                          <option value="kontrol_ediliyor">Kontrol Ediliyor</option>
-                          <option value="tamamlandi">Tamamlandı</option>
-                          <option value="iade">İade</option>
-                        </select>
-                      </div>
-                      <% if (tasks.myAssignedTasks && tasks.myAssignedTasks.length> 0) { %>
-                        <% tasks.myAssignedTasks.forEach(task=> { %>
-                          <div class="task-card <%= task.oncelik === 'acil' ? 'urgent' : '' %>" data-status="<%= task.status %>" data-section="bana-atanan">
-                            <div class="task-header">
-                              <h3>
-                                <%= task.islem_turu %>
-                              </h3>
-                              <span class="badge <%= task.oncelik === 'acil' ? 'badge-urgent' : 'badge-normal' %>">
-                                <%= task.oncelik.toUpperCase() %>
-                              </span>
-                            </div>
-                            <p><strong>Adliye:</strong>
-                              <%= task.adliye %> | <strong>Müvekkil:</strong>
-                                <%= task.muvekkil %> | <strong>Portföy:</strong>
-                                  <%= task.portfoy %>
-                            </p>
-                            <p><strong>İcra Dairesi:</strong>
-                              <%= task.icra_dairesi || '-' %>
-                            </p>
-                            <p><strong>Dosya No:</strong>
-                              <%= task.icra_esas_no || '-' %>
-                            </p>
-                            <% if (task.borclu || task.borclu_tckn_vkn) { %>`n                  <p><strong>Borçlu:</strong>`n                    <%= task.borclu || '-' %>`n                    <% if (task.borclu_tckn_vkn) { %>`n                      | <strong>TCKN:</strong> <%= task.borclu_tckn_vkn %>`n                    <% } %>`n                  </p>`n                  <% } %>
-                                <p><strong>Açıklama:</strong>
-                                  <%= task.islem_aciklamasi %>
-                                </p>
-                                <p><strong>Durum:</strong>
-                                  <%= task.status %>
-                                </p>
-                                <p><strong>Tarih:</strong>
-                                  <%= task.eklenme_tarihi %>
-                                </p>
-                                <form method="POST" action="/tasks/<%= task.id %>/status" class="scroll-form" style="margin-top: 0.75rem;">
-                                  <input type="hidden" name="returnTo" value="gorevler">
-                                  <select name="status" required onchange="checkConfirm(this)"
-                                    style="margin-bottom: 0.5rem;">
-                                    <option value="">Durum Değiştir</option>
-                                    <option value="tamamlanmadi" <%=task.status==='tamamlanmadi' ? 'selected' : '' %>
-                                      >Tamamlanmadı</option>
-                                    <option value="kontrol_ediliyor" <%=task.status==='kontrol_ediliyor' ? 'selected'
-                                      : '' %>>Kontrol Ediliyor</option>
-                                    <option value="yapiliyor" <%=task.status==='yapiliyor' ? 'selected' : '' %>>Yapılıyor</option>
-                                    <option value="tamamlandi">Tamamlandı</option>
-                                    <option value="tamamlanamıyor">Tamamlanamıyor</option>
-                                    <option value="iade" <%=task.status==='iade' ? 'selected' : '' %>>İade</option>
-                                  </select>
-                                  <button type="submit">Güncelle</button>
-                                </form>
-                                <!-- Notes UI -->
-                                <div class="note-controls" style="margin-top:0.5rem;">
-                                  <button type="button" class="btn btn-note"
-                                    onclick="toggleNotes('<%= task.id %>','bana-atanan')">📝 Görev Notu (<%=
-                                      ((historiesByTask && historiesByTask[task.id]) || []).filter(h=>
-                                      h.action==='note').length %>)</button>
-                                </div>
-                                <div class="note-panel" id="notes-bana-atanan-<%= task.id %>"
-                                  style="display:none; margin-top:0.5rem;">
-                                  <div class="notes-list">
-                                    <% if (historiesByTask && historiesByTask[task.id]) { %>
-                                      <% historiesByTask[task.id].filter(h => h.action === 'note').forEach(function(h){ %>
-                                        <div class="note-item">
-                                          <div class="note-meta"><strong>
-                                              <%= users.find(function(u){ return u.id===h.user_id; })?.username || 'Anonim' %>
-                                            </strong> · <small>
-                                              <%= new Date(h.created_at).toLocaleString('tr-TR') %>
-                                            </small></div>
-                                          <div class="note-body">
-                                            <%= h.details %>
-                                          </div>
-                                        </div>
-                                      <% }); %>
-                                    <% } %>
-                                  </div>
-                                  <form method="POST" action="/tasks/<%= task.id %>/note" class="note-form scroll-form">
-                                    <input type="hidden" name="returnTo" value="bana-atanan">
-                                    <textarea name="note" placeholder="Not ekleyin..." required></textarea>
-                                    <button type="submit" class="btn btn-primary" style="margin-top:0.5rem;">Ekle</button>
-                                  </form>
-                                </div>
-
-                          </div>
-                          <% }) %>
-                            <% } else { %>
-                              <div class="empty-state">
-                                <div class="empty-state-icon">📝</div>
-                                <p>Size atanan görev yok</p>
-                              </div>
-                              <% } %>
-                    </section>
-
-                    <!-- Atama Bekleyen -->
-                    <section id="atama" class="section">
-                      <h2>Atama Bekleyen Görevler</h2>
-                      <% if (userStats && userStats.length) { %>
-                        <div class="user-stats-panel" style="margin-bottom:1rem;">
-                          <h4>Kullanıcı Aktif Görev Sayıları</h4>
-                          <table style="width:100%;border-collapse:collapse;margin-top:0.5rem;">
-                            <thead>
-                              <tr><th style="text-align:left;padding:6px">Kullanıcı</th><th style="text-align:right;padding:6px">Aktif</th></tr>
-                            </thead>
-                            <tbody>
-                              <% userStats.forEach(function(u){ %>
-                                <tr>
-                                  <td style="padding:6px"><%= u.username %> <small style="color:#666">(<%= u.role === 'yonetici' ? 'Yönetici' : 'Atanan' %>)</small></td>
-                                  <td style="padding:6px;text-align:right"><%= u.taskCount %></td>
-                                </tr>
-                              <% }) %>
-                            </tbody>
-                          </table>
-                        </div>
-                      <% } %>
-                      <% if (tasks.toDistribute && tasks.toDistribute.length> 0) { %>
-                        <% tasks.toDistribute.forEach(task=> { %>
+                  <% if (role==='atayan' ) { %>
+                    <!-- Son Onay Bekleyen -->
+                    <section id="onay-bekleyen" class="section">
+                      <h2>Son Onay Bekleyen Görevler</h2>
+                      <% if (tasks.forApproval && tasks.forApproval.length> 0) { %>
+                        <% tasks.forApproval.forEach(task=> { %>
                           <div class="task-card <%= task.oncelik === 'acil' ? 'urgent' : '' %>">
                             <div class="task-header">
                               <h3>
@@ -863,88 +674,6 @@
                             </p>
                             <p><strong>İcra Dairesi:</strong>
                               <%= task.icra_dairesi || '-' %>
-                            </p>
-                            <p><strong>Dosya No:</strong>
-                              <%= task.icra_esas_no || '-' %>
-                            </p>
-                            <p><strong>Açıklama:</strong>
-                              <%= task.islem_aciklamasi %>
-                            </p>
-                            <form method="POST" action="/tasks/<%= task.id %>/assign" class="scroll-form">
-                              <input type="hidden" name="returnTo" value="atama">
-                              <select name="assignee_id" required>
-                                <option value="">Atanan Seç</option>
-                                <% users.filter(u=> u.role === 'atanan' || u.role === 'yonetici').forEach(function(user){ %>
-                                  <% const stat = (userStats || []).find(function(s){ return s.id === user.id; }); %>
-                                  <option value="<%= user.id %>">
-                                    <%= user.username %> (<%= stat ? stat.taskCount : 0 %>)
-                                  </option>
-                                <% }) %>
-                              </select>
-                              <button type="submit">Ata</button>
-                            </form>
-                            <!-- Notes UI -->
-                            <div class="note-controls" style="margin-top:0.5rem;">
-                              <button type="button" class="btn btn-note"
-                                onclick="toggleNotes('<%= task.id %>','atama')">📝
-                                Görev Notu (<%= ((historiesByTask && historiesByTask[task.id]) || []).filter(h=>
-                                  h.action==='note').length %>)</button>
-                            </div>
-                            <div class="note-panel" id="notes-atama-<%= task.id %>"
-                              style="display:none; margin-top:0.5rem;">
-                              <div class="notes-list">
-                                <% if (historiesByTask && historiesByTask[task.id]) { %>
-                                  <% historiesByTask[task.id].filter(h => h.action === 'note').forEach(function(h){ %>
-                                    <div class="note-item">
-                                      <div class="note-meta"><strong>
-                                          <%= users.find(function(u){ return u.id===h.user_id; })?.username || 'Anonim' %>
-                                        </strong> · <small>
-                                          <%= new Date(h.created_at).toLocaleString('tr-TR') %>
-                                        </small></div>
-                                      <div class="note-body">
-                                        <%= h.details %>
-                                      </div>
-                                    </div>
-                                  <% }); %>
-                                <% } %>
-                              </div>
-                              <form method="POST" action="/tasks/<%= task.id %>/note" class="note-form scroll-form">
-                                <input type="hidden" name="returnTo" value="atama">
-                                <textarea name="note" placeholder="Not ekleyin..." required></textarea>
-                                <button type="submit" class="btn btn-primary" style="margin-top:0.5rem;">Ekle</button>
-                              </form>
-                            </div>
-                          </div>
-                          <% }) %>
-                            <% } else { %>
-                              <div class="empty-state">
-                                <div class="empty-state-icon">👥</div>
-                                <p>Atama bekleyen görev yok</p>
-                              </div>
-                              <% } %>
-                    </section>
-
-                    <!-- Kontrol Edilecek -->
-                    <section id="kontrol" class="section">
-                      <h2>Kontrol Edilecek Görevler</h2>
-                      <% if (tasks.forControl && tasks.forControl.length> 0) { %>
-                        <% tasks.forControl.forEach(task=> { %>
-                          <div class="task-card <%= task.oncelik === 'acil' ? 'urgent' : '' %>">
-                            <div class="task-header">
-                              <h3>
-                                <%= task.islem_turu %>
-                              </h3>
-                              <span class="badge <%= task.oncelik === 'acil' ? 'badge-urgent' : 'badge-normal' %>">
-                                <%= task.oncelik.toUpperCase() %>
-                              </span>
-                            </div>
-                            <p><strong>Adliye:</strong>
-                              <%= task.adliye %> | <strong>Müvekkil:</strong>
-                                <%= task.muvekkil %> | <strong>Portföy:</strong>
-                                  <%= task.portfoy %>
-                            </p>
-                            <p><strong>İcra Dairesi:</strong>
-                              <%= task.icra_dairesi %>
                             </p>
                             <p><strong>Dosya No:</strong>
                               <%= task.icra_esas_no || '-' %>
@@ -952,177 +681,531 @@
                             <% if (task.borclu || task.borclu_tckn_vkn) { %>
                               <p><strong>Borçlu:</strong>
                                 <%= task.borclu || '-' %>
-                                <% if (task.borclu_tckn_vkn) { %>
-                                  | <strong>TCKN:</strong> <%= task.borclu_tckn_vkn %>
-                                <% } %>
+                                  <% if (task.borclu_tckn_vkn) { %>
+                                    | <strong>TCKN:</strong>
+                                    <%= task.borclu_tckn_vkn %>
+                                      <% } %>
                               </p>
-                            <% } %>
-                            <p><strong>Açıklama:</strong>
-                              <%= task.islem_aciklamasi %>
-                            </p>
-                            <p><strong>Atanan:</strong>
-                              <%= users.find(u=> u.id === task.assignee_id)?.username || (task.assignee_id || '-')
-                                %>
-                            </p>
-                            <p><strong>Durum:</strong>
-                              <%= task.status %>
-                            </p>
-                            <div>
-                              <% if (task.status==='kontrol_bekleniyor' || task.status==='son_onay_bekliyor' ) { %>
-                                <form method="POST" action="/tasks/<%= task.id %>/control" class="scroll-form"
-                                  style="display:inline; margin-right:0.5rem;">
-                                  <input type="hidden" name="returnTo" value="kontrol">
-                                  <input type="hidden" name="control_status" value="uygun">
-                                  <button type="submit">Onay</button>
-                                </form>
-                                <form method="POST" action="/tasks/<%= task.id %>/control" class="scroll-form" style="display:inline;">
-                                  <input type="hidden" name="returnTo" value="kontrol">
-                                  <input type="hidden" name="control_status" value="iade">
-                                  <button type="submit"
-                                    onclick="return confirm('Görevi iade etmek istediğinize emin misiniz?')">İade</button>
-                                </form>
-                                <% } else { %>
-                                  <form method="POST" action="/tasks/<%= task.id %>/control" class="scroll-form">
-                                    <input type="hidden" name="returnTo" value="kontrol">
-                                    <select name="control_status" required>
-                                      <option value="">Kontrol Sonucu</option>
-                                      <option value="kontrol_bekleniyor">Kontrol Bekleniyor</option>
-                                      <option value="uygun">Uygun</option>
-                                      <option value="iade">İade</option>
-                                    </select>
-                                    <button type="submit">Kaydet</button>
-                                  </form>
-                                  <% } %>
-                            </div>
-                            <!-- Notes UI -->
-                            <div class="note-controls" style="margin-top:0.5rem;">
-                              <button type="button" class="btn btn-note"
-                                onclick="toggleNotes('<%= task.id %>','kontrol')">📝 Görev Notu (<%= ((historiesByTask
-                                  && historiesByTask[task.id]) || []).filter(h=>
-                                  h.action==='note').length %>)</button>
-                            </div>
-                            <div class="note-panel" id="notes-kontrol-<%= task.id %>"
-                              style="display:none; margin-top:0.5rem;">
-                              <div class="notes-list">
-                                <% if (historiesByTask && historiesByTask[task.id]) { %>
-                                  <% historiesByTask[task.id].filter(h => h.action === 'note').forEach(function(h){ %>
-                                    <div class="note-item">
-                                      <div class="note-meta"><strong>
-                                          <%= users.find(function(u){ return u.id===h.user_id; })?.username || 'Anonim' %>
-                                        </strong> · <small>
-                                          <%= new Date(h.created_at).toLocaleString('tr-TR') %>
-                                        </small></div>
-                                      <div class="note-body">
-                                        <%= h.details %>
-                                      </div>
-                                    </div>
-                                  <% }); %>
-                                <% } %>
-                              </div>
-                              <form method="POST" action="/tasks/<%= task.id %>/note" class="note-form scroll-form">
-                                <input type="hidden" name="returnTo" value="kontrol">
-                                <textarea name="note" placeholder="Not ekleyin..." required></textarea>
-                                <button type="submit" class="btn btn-primary" style="margin-top:0.5rem;">Ekle</button>
-                              </form>
-                            </div>
-                          </div>
-                          <% }) %>
-                            <% } else { %>
-                              <div class="empty-state">
-                                <div class="empty-state-icon">🔍</div>
-                                <p>Kontrol edilecek görev yok</p>
-                              </div>
                               <% } %>
-                    </section>
-
-                    <!-- Yönetici Son Onay -->
-                    <section id="yonetici-onay" class="section">
-                      <h2>Son Onay Bekleyen Görevler (<%= tasks.forFinalApproval ? tasks.forFinalApproval.length : 0 %>)
-                      </h2>
-                      <% if (tasks.forFinalApproval && tasks.forFinalApproval.length> 0) { %>
-                        <% tasks.forFinalApproval.forEach(task=> { %>
-                          <div class="task-card <%= task.oncelik === 'acil' ? 'urgent' : '' %>">
-                            <div class="task-header">
-                              <h3>
-                                <%= task.islem_turu %>
-                              </h3>
-                              <span class="badge <%= task.oncelik === 'acil' ? 'badge-urgent' : 'badge-normal' %>">
-                                <%= task.oncelik.toUpperCase() %>
-                              </span>
-                            </div>
-                            <p><strong>Adliye:</strong>
-                              <%= task.adliye %> | <strong>Müvekkil:</strong>
-                                <%= task.muvekkil %> | <strong>Portföy:</strong>
-                                  <%= task.portfoy %>
-                            </p>
-                            <p><strong>İcra Dairesi:</strong>
-                              <%= task.icra_dairesi || '-' %>
-                            </p>
-                            <p><strong>Dosya No:</strong>
-                              <%= task.icra_esas_no || '-' %>
-                            </p>
-                            <% if (task.borclu || task.borclu_tckn_vkn) { %>`n                  <p><strong>Borçlu:</strong>`n                    <%= task.borclu || '-' %>`n                    <% if (task.borclu_tckn_vkn) { %>`n                      | <strong>TCKN:</strong> <%= task.borclu_tckn_vkn %>`n                    <% } %>`n                  </p>`n                  <% } %>
                                 <p><strong>Açıklama:</strong>
                                   <%= task.islem_aciklamasi %>
                                 </p>
-                                <div style="display: flex; gap: 0.5rem; margin-top: 0.75rem;">
-                                  <form method="POST" action="/tasks/<%= task.id %>/final-approve" class="scroll-form"
-                                    style="display:inline; margin: 0;">
-                                    <input type="hidden" name="returnTo" value="yonetici-onay">
-                                    <button type="submit" class="btn-approve"
-                                      onclick="return confirm('Görevi onaylayıp arşivlemek istediğinizden emin misiniz?')">✅
-                                      Son Onay Ver</button>
-                                  </form>
-                                  <form method="POST" action="/tasks/<%= task.id %>/control" class="scroll-form"
-                                    style="display:inline; margin: 0;">
-                                    <input type="hidden" name="returnTo" value="yonetici-onay">
-                                    <input type="hidden" name="control_status" value="iade">
-                                    <button type="submit" class="btn-return"
-                                      onclick="return confirm('Görevi atanana iade etmek istediğinizden emin misiniz?')">↩️
-                                      İade Et</button>
-                                  </form>
-                                </div>
-                                <!-- Notes UI -->
-                                <div class="note-controls" style="margin-top:0.5rem;">
-                                  <button type="button" class="btn btn-note"
-                                    onclick="toggleNotes('<%= task.id %>','yonetici-onay')">📝 Görev Notu (<%=
-                                      ((historiesByTask && historiesByTask[task.id]) || []).filter(h=>
-                                      h.action==='note').length %>)</button>
-                                </div>
-                                <div class="note-panel" id="notes-yonetici-onay-<%= task.id %>"
-                                  style="display:none; margin-top:0.5rem;">
-                                  <div class="notes-list">
-                                    <% if (historiesByTask && historiesByTask[task.id]) { %>
-                                      <% historiesByTask[task.id].filter(h => h.action === 'note').forEach(function(h){ %>
-                                        <div class="note-item">
-                                          <div class="note-meta"><strong>
-                                              <%= users.find(function(u){ return u.id===h.user_id; })?.username || 'Anonim' %>
-                                            </strong> · <small>
-                                              <%= new Date(h.created_at).toLocaleString('tr-TR') %>
-                                            </small></div>
-                                          <div class="note-body">
-                                            <%= h.details %>
-                                          </div>
-                                        </div>
-                                      <% }); %>
-                                    <% } %>
-                                  </div>
-                                  <form method="POST" action="/tasks/<%= task.id %>/note" class="note-form scroll-form">
-                                    <input type="hidden" name="returnTo" value="yonetici-onay">
-                                    <textarea name="note" placeholder="Not ekleyin..." required></textarea>
-                                    <button type="submit" class="btn btn-primary" style="margin-top:0.5rem;">Ekle</button>
-                                  </form>
-                                </div>
+                                <% if (task.assignee_id) { %>
+                                  <p><strong>Atanan:</strong>
+                                    <%= users.find(u=> u.id === task.assignee_id)?.username || '-' %>
+                                  </p>
+                                  <% } %>
+                                    <div style="display: flex; gap: 0.5rem; margin-top: 0.75rem;">
+                                      <form method="POST" action="/tasks/<%= task.id %>/final-approve"
+                                        class="scroll-form" style="display:inline; margin: 0;">
+                                        <input type="hidden" name="returnTo" value="onay-bekleyen">
+                                        <button type="submit" class="btn-approve"
+                                          onclick="return confirm('Görevi onaylayıp arşivlemek istediğinizden emin misiniz?')">✅
+                                          Son Onay Ver</button>
+                                      </form>
+                                      <form method="POST" action="/tasks/<%= task.id %>/control" class="scroll-form"
+                                        style="display:inline; margin: 0;">
+                                        <input type="hidden" name="returnTo" value="onay-bekleyen">
+                                        <input type="hidden" name="control_status" value="iade">
+                                        <button type="submit" class="btn-return"
+                                          onclick="return confirm('Görevi atanana iade etmek istediğinizden emin misiniz?')">↩️
+                                          İade Et</button>
+                                      </form>
+                                    </div>
+                                    <!-- Notes UI -->
+                                    <div class="note-controls" style="margin-top:0.5rem;">
+                                      <button type="button" class="btn btn-note"
+                                        onclick="toggleNotes('<%= task.id %>','onay-bekleyen')">📝 Görev Notu (<%=
+                                          ((historiesByTask && historiesByTask[task.id]) || []).filter(h=>
+                                          h.action==='note').length %>)</button>
+                                    </div>
+                                    <div class="note-panel" id="notes-onay-bekleyen-<%= task.id %>"
+                                      style="display:none; margin-top:0.5rem;">
+                                      <div class="notes-list">
+                                        <% if (historiesByTask && historiesByTask[task.id]) { %>
+                                          <% historiesByTask[task.id].filter(h=> h.action ===
+                                            'note').forEach(function(h){ %>
+                                            <div class="note-item">
+                                              <div class="note-meta"><strong>
+                                                  <%= users.find(function(u){ return u.id===h.user_id; })?.username
+                                                    || 'Anonim' %>
+                                                </strong> · <small>
+                                                  <%= new Date(h.created_at).toLocaleString('tr-TR') %>
+                                                </small></div>
+                                              <div class="note-body">
+                                                <%= h.details %>
+                                              </div>
+                                            </div>
+                                            <% }); %>
+                                              <% } %>
+                                      </div>
+                                      <form method="POST" action="/tasks/<%= task.id %>/note"
+                                        class="note-form scroll-form">
+                                        <input type="hidden" name="returnTo" value="onay-bekleyen">
+                                        <textarea name="note" placeholder="Not ekleyin..." required></textarea>
+                                        <button type="submit" class="btn btn-primary"
+                                          style="margin-top:0.5rem;">Ekle</button>
+                                      </form>
+                                    </div>
                           </div>
                           <% }) %>
                             <% } else { %>
                               <div class="empty-state">
                                 <div class="empty-state-icon">✅</div>
-                                <p>Son onay bekleyen görev yok</p>
+                                <p>Onay bekleyen görev yok</p>
                               </div>
                               <% } %>
                     </section>
                     <% } %>
+
+                      <% if (role==='yonetici' ) { %>
+                        <!-- Bana Atanan Görevler -->
+                        <section id="bana-atanan" class="section">
+                          <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h2>Bana Atanan Görevler (<%= tasks.myAssignedTasks ? tasks.myAssignedTasks.length : 0 %>)
+                            </h2>
+                            <select id="filter-bana-atanan" onchange="filterTasks('bana-atanan')"
+                              style="padding: 0.5rem; border-radius: 6px; border: 1px solid #ddd;">
+                              <option value="">Tüm Durumlar</option>
+                              <option value="tamamlanmadi">Tamamlanmadı</option>
+                              <option value="kontrol_ediliyor">Kontrol Ediliyor</option>
+                              <option value="tamamlandi">Tamamlandı</option>
+                              <option value="iade">İade</option>
+                            </select>
+                          </div>
+                          <% if (tasks.myAssignedTasks && tasks.myAssignedTasks.length> 0) { %>
+                            <% tasks.myAssignedTasks.forEach(task=> { %>
+                              <div class="task-card <%= task.oncelik === 'acil' ? 'urgent' : '' %>"
+                                data-status="<%= task.status %>" data-section="bana-atanan">
+                                <div class="task-header">
+                                  <h3>
+                                    <%= task.islem_turu %>
+                                  </h3>
+                                  <span class="badge <%= task.oncelik === 'acil' ? 'badge-urgent' : 'badge-normal' %>">
+                                    <%= task.oncelik.toUpperCase() %>
+                                  </span>
+                                </div>
+                                <p><strong>Adliye:</strong>
+                                  <%= task.adliye %> | <strong>Müvekkil:</strong>
+                                    <%= task.muvekkil %> | <strong>Portföy:</strong>
+                                      <%= task.portfoy %>
+                                </p>
+                                <p><strong>İcra Dairesi:</strong>
+                                  <%= task.icra_dairesi || '-' %>
+                                </p>
+                                <p><strong>Dosya No:</strong>
+                                  <%= task.icra_esas_no || '-' %>
+                                </p>
+                                <% if (task.borclu || task.borclu_tckn_vkn) { %>`n <p><strong>Borçlu:</strong>`n <%=
+                                      task.borclu || '-' %>`n <% if (task.borclu_tckn_vkn) { %>`n |
+                                        <strong>TCKN:</strong>
+                                        <%= task.borclu_tckn_vkn %>`n <% } %>`n </p>`n <% } %>
+                                    <p><strong>Açıklama:</strong>
+                                      <%= task.islem_aciklamasi %>
+                                    </p>
+                                    <p><strong>Durum:</strong>
+                                      <%= task.status %>
+                                    </p>
+                                    <p><strong>Tarih:</strong>
+                                      <%= task.eklenme_tarihi %>
+                                    </p>
+                                    <form method="POST" action="/tasks/<%= task.id %>/status" class="scroll-form"
+                                      style="margin-top: 0.75rem;">
+                                      <input type="hidden" name="returnTo" value="bana-atanan">
+                                      <select name="status" required onchange="checkConfirm(this)"
+                                        style="margin-bottom: 0.5rem;">
+                                        <option value="">Durum Değiştir</option>
+                                        <option value="tamamlanmadi" <%=task.status==='tamamlanmadi' ? 'selected' : ''
+                                          %>
+                                          >Tamamlanmadı</option>
+                                        <option value="kontrol_ediliyor" <%=task.status==='kontrol_ediliyor'
+                                          ? 'selected' : '' %>>Kontrol Ediliyor</option>
+                                        <option value="yapiliyor" <%=task.status==='yapiliyor' ? 'selected' : '' %>
+                                          >Yapılıyor</option>
+                                        <option value="tamamlandi">Tamamlandı</option>
+                                        <option value="tamamlanamıyor">Tamamlanamıyor</option>
+                                        <option value="iade" <%=task.status==='iade' ? 'selected' : '' %>>İade</option>
+                                      </select>
+                                      <button type="submit">Güncelle</button>
+                                    </form>
+                                    <!-- Notes UI -->
+                                    <div class="note-controls" style="margin-top:0.5rem;">
+                                      <button type="button" class="btn btn-note"
+                                        onclick="toggleNotes('<%= task.id %>','bana-atanan')">📝 Görev Notu (<%=
+                                          ((historiesByTask && historiesByTask[task.id]) || []).filter(h=>
+                                          h.action==='note').length %>)</button>
+                                    </div>
+                                    <div class="note-panel" id="notes-bana-atanan-<%= task.id %>"
+                                      style="display:none; margin-top:0.5rem;">
+                                      <div class="notes-list">
+                                        <% if (historiesByTask && historiesByTask[task.id]) { %>
+                                          <% historiesByTask[task.id].filter(h=> h.action ===
+                                            'note').forEach(function(h){ %>
+                                            <div class="note-item">
+                                              <div class="note-meta"><strong>
+                                                  <%= users.find(function(u){ return u.id===h.user_id; })?.username
+                                                    || 'Anonim' %>
+                                                </strong> · <small>
+                                                  <%= new Date(h.created_at).toLocaleString('tr-TR') %>
+                                                </small></div>
+                                              <div class="note-body">
+                                                <%= h.details %>
+                                              </div>
+                                            </div>
+                                            <% }); %>
+                                              <% } %>
+                                      </div>
+                                      <form method="POST" action="/tasks/<%= task.id %>/note"
+                                        class="note-form scroll-form">
+                                        <input type="hidden" name="returnTo" value="bana-atanan">
+                                        <textarea name="note" placeholder="Not ekleyin..." required></textarea>
+                                        <button type="submit" class="btn btn-primary"
+                                          style="margin-top:0.5rem;">Ekle</button>
+                                      </form>
+                                    </div>
+
+                              </div>
+                              <% }) %>
+                                <% } else { %>
+                                  <div class="empty-state">
+                                    <div class="empty-state-icon">📝</div>
+                                    <p>Size atanan görev yok</p>
+                                  </div>
+                                  <% } %>
+                        </section>
+
+                        <!-- Atama Bekleyen -->
+                        <section id="atama" class="section">
+                          <h2>Atama Bekleyen Görevler</h2>
+                          <% if (userStats && userStats.length) { %>
+                            <div class="user-stats-panel" style="margin-bottom:1rem;">
+                              <h4>Kullanıcı Aktif Görev Sayıları</h4>
+                              <table style="width:100%;border-collapse:collapse;margin-top:0.5rem;">
+                                <thead>
+                                  <tr>
+                                    <th style="text-align:left;padding:6px">Kullanıcı</th>
+                                    <th style="text-align:right;padding:6px">Aktif</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  <% userStats.forEach(function(u){ %>
+                                    <tr>
+                                      <td style="padding:6px">
+                                        <%= u.username %> <small style="color:#666">(<%= u.role==='yonetici'
+                                              ? 'Yönetici' : 'Atanan' %>)</small>
+                                      </td>
+                                      <td style="padding:6px;text-align:right">
+                                        <%= u.taskCount %>
+                                      </td>
+                                    </tr>
+                                    <% }) %>
+                                </tbody>
+                              </table>
+                            </div>
+                            <% } %>
+                              <% if (tasks.toDistribute && tasks.toDistribute.length> 0) { %>
+                                <% tasks.toDistribute.forEach(task=> { %>
+                                  <div class="task-card <%= task.oncelik === 'acil' ? 'urgent' : '' %>">
+                                    <div class="task-header">
+                                      <h3>
+                                        <%= task.islem_turu %>
+                                      </h3>
+                                      <span
+                                        class="badge <%= task.oncelik === 'acil' ? 'badge-urgent' : 'badge-normal' %>">
+                                        <%= task.oncelik.toUpperCase() %>
+                                      </span>
+                                    </div>
+                                    <p><strong>Adliye:</strong>
+                                      <%= task.adliye %> | <strong>Müvekkil:</strong>
+                                        <%= task.muvekkil %> | <strong>Portföy:</strong>
+                                          <%= task.portfoy %>
+                                    </p>
+                                    <p><strong>İcra Dairesi:</strong>
+                                      <%= task.icra_dairesi || '-' %>
+                                    </p>
+                                    <p><strong>Dosya No:</strong>
+                                      <%= task.icra_esas_no || '-' %>
+                                    </p>
+                                    <p><strong>Açıklama:</strong>
+                                      <%= task.islem_aciklamasi %>
+                                    </p>
+                                    <form method="POST" action="/tasks/<%= task.id %>/assign" class="scroll-form">
+                                      <input type="hidden" name="returnTo" value="atama">
+                                      <select name="assignee_id" required>
+                                        <option value="">Atanan Seç</option>
+                                        <% users.filter(u=> u.role === 'atanan' || u.role ===
+                                          'yonetici').forEach(function(user){ %>
+                                          <% const stat=(userStats || []).find(function(s){ return s.id===user.id; });
+                                            %>
+                                            <option value="<%= user.id %>">
+                                              <%= user.username %> (<%= stat ? stat.taskCount : 0 %>)
+                                            </option>
+                                            <% }) %>
+                                      </select>
+                                      <button type="submit">Ata</button>
+                                    </form>
+                                    <!-- Notes UI -->
+                                    <div class="note-controls" style="margin-top:0.5rem;">
+                                      <button type="button" class="btn btn-note"
+                                        onclick="toggleNotes('<%= task.id %>','atama')">📝
+                                        Görev Notu (<%= ((historiesByTask && historiesByTask[task.id]) || []).filter(h=>
+                                          h.action==='note').length %>)</button>
+                                    </div>
+                                    <div class="note-panel" id="notes-atama-<%= task.id %>"
+                                      style="display:none; margin-top:0.5rem;">
+                                      <div class="notes-list">
+                                        <% if (historiesByTask && historiesByTask[task.id]) { %>
+                                          <% historiesByTask[task.id].filter(h=> h.action ===
+                                            'note').forEach(function(h){ %>
+                                            <div class="note-item">
+                                              <div class="note-meta"><strong>
+                                                  <%= users.find(function(u){ return u.id===h.user_id; })?.username
+                                                    || 'Anonim' %>
+                                                </strong> · <small>
+                                                  <%= new Date(h.created_at).toLocaleString('tr-TR') %>
+                                                </small></div>
+                                              <div class="note-body">
+                                                <%= h.details %>
+                                              </div>
+                                            </div>
+                                            <% }); %>
+                                              <% } %>
+                                      </div>
+                                      <form method="POST" action="/tasks/<%= task.id %>/note"
+                                        class="note-form scroll-form">
+                                        <input type="hidden" name="returnTo" value="atama">
+                                        <textarea name="note" placeholder="Not ekleyin..." required></textarea>
+                                        <button type="submit" class="btn btn-primary"
+                                          style="margin-top:0.5rem;">Ekle</button>
+                                      </form>
+                                    </div>
+                                  </div>
+                                  <% }) %>
+                                    <% } else { %>
+                                      <div class="empty-state">
+                                        <div class="empty-state-icon">👥</div>
+                                        <p>Atama bekleyen görev yok</p>
+                                      </div>
+                                      <% } %>
+                        </section>
+
+                        <!-- Kontrol Edilecek -->
+                        <section id="kontrol" class="section">
+                          <h2>Kontrol Edilecek Görevler</h2>
+                          <% if (tasks.forControl && tasks.forControl.length> 0) { %>
+                            <% tasks.forControl.forEach(task=> { %>
+                              <div class="task-card <%= task.oncelik === 'acil' ? 'urgent' : '' %>">
+                                <div class="task-header">
+                                  <h3>
+                                    <%= task.islem_turu %>
+                                  </h3>
+                                  <span class="badge <%= task.oncelik === 'acil' ? 'badge-urgent' : 'badge-normal' %>">
+                                    <%= task.oncelik.toUpperCase() %>
+                                  </span>
+                                </div>
+                                <p><strong>Adliye:</strong>
+                                  <%= task.adliye %> | <strong>Müvekkil:</strong>
+                                    <%= task.muvekkil %> | <strong>Portföy:</strong>
+                                      <%= task.portfoy %>
+                                </p>
+                                <p><strong>İcra Dairesi:</strong>
+                                  <%= task.icra_dairesi %>
+                                </p>
+                                <p><strong>Dosya No:</strong>
+                                  <%= task.icra_esas_no || '-' %>
+                                </p>
+                                <% if (task.borclu || task.borclu_tckn_vkn) { %>
+                                  <p><strong>Borçlu:</strong>
+                                    <%= task.borclu || '-' %>
+                                      <% if (task.borclu_tckn_vkn) { %>
+                                        | <strong>TCKN:</strong>
+                                        <%= task.borclu_tckn_vkn %>
+                                          <% } %>
+                                  </p>
+                                  <% } %>
+                                    <p><strong>Açıklama:</strong>
+                                      <%= task.islem_aciklamasi %>
+                                    </p>
+                                    <p><strong>Atanan:</strong>
+                                      <%= users.find(u=> u.id === task.assignee_id)?.username || (task.assignee_id ||
+                                        '-')
+                                        %>
+                                    </p>
+                                    <p><strong>Durum:</strong>
+                                      <%= task.status %>
+                                    </p>
+                                    <div>
+                                      <% if (task.status==='kontrol_bekleniyor' || task.status==='son_onay_bekliyor' ) {
+                                        %>
+                                        <form method="POST" action="/tasks/<%= task.id %>/control" class="scroll-form"
+                                          style="display:inline; margin-right:0.5rem;">
+                                          <input type="hidden" name="returnTo" value="kontrol">
+                                          <input type="hidden" name="control_status" value="uygun">
+                                          <button type="submit">Onay</button>
+                                        </form>
+                                        <form method="POST" action="/tasks/<%= task.id %>/control" class="scroll-form"
+                                          style="display:inline;">
+                                          <input type="hidden" name="returnTo" value="kontrol">
+                                          <input type="hidden" name="control_status" value="iade">
+                                          <button type="submit"
+                                            onclick="return confirm('Görevi iade etmek istediğinize emin misiniz?')">İade</button>
+                                        </form>
+                                        <% } else { %>
+                                          <form method="POST" action="/tasks/<%= task.id %>/control"
+                                            class="scroll-form">
+                                            <input type="hidden" name="returnTo" value="kontrol">
+                                            <select name="control_status" required>
+                                              <option value="">Kontrol Sonucu</option>
+                                              <option value="kontrol_bekleniyor">Kontrol Bekleniyor</option>
+                                              <option value="uygun">Uygun</option>
+                                              <option value="iade">İade</option>
+                                            </select>
+                                            <button type="submit">Kaydet</button>
+                                          </form>
+                                          <% } %>
+                                    </div>
+                                    <!-- Notes UI -->
+                                    <div class="note-controls" style="margin-top:0.5rem;">
+                                      <button type="button" class="btn btn-note"
+                                        onclick="toggleNotes('<%= task.id %>','kontrol')">📝 Görev Notu (<%=
+                                          ((historiesByTask && historiesByTask[task.id]) || []).filter(h=>
+                                          h.action==='note').length %>)</button>
+                                    </div>
+                                    <div class="note-panel" id="notes-kontrol-<%= task.id %>"
+                                      style="display:none; margin-top:0.5rem;">
+                                      <div class="notes-list">
+                                        <% if (historiesByTask && historiesByTask[task.id]) { %>
+                                          <% historiesByTask[task.id].filter(h=> h.action ===
+                                            'note').forEach(function(h){ %>
+                                            <div class="note-item">
+                                              <div class="note-meta"><strong>
+                                                  <%= users.find(function(u){ return u.id===h.user_id; })?.username
+                                                    || 'Anonim' %>
+                                                </strong> · <small>
+                                                  <%= new Date(h.created_at).toLocaleString('tr-TR') %>
+                                                </small></div>
+                                              <div class="note-body">
+                                                <%= h.details %>
+                                              </div>
+                                            </div>
+                                            <% }); %>
+                                              <% } %>
+                                      </div>
+                                      <form method="POST" action="/tasks/<%= task.id %>/note"
+                                        class="note-form scroll-form">
+                                        <input type="hidden" name="returnTo" value="kontrol">
+                                        <textarea name="note" placeholder="Not ekleyin..." required></textarea>
+                                        <button type="submit" class="btn btn-primary"
+                                          style="margin-top:0.5rem;">Ekle</button>
+                                      </form>
+                                    </div>
+                              </div>
+                              <% }) %>
+                                <% } else { %>
+                                  <div class="empty-state">
+                                    <div class="empty-state-icon">🔍</div>
+                                    <p>Kontrol edilecek görev yok</p>
+                                  </div>
+                                  <% } %>
+                        </section>
+
+                        <!-- Yönetici Son Onay -->
+                        <section id="yonetici-onay" class="section">
+                          <h2>Son Onay Bekleyen Görevler (<%= tasks.forFinalApproval ? tasks.forFinalApproval.length : 0
+                              %>)
+                          </h2>
+                          <% if (tasks.forFinalApproval && tasks.forFinalApproval.length> 0) { %>
+                            <% tasks.forFinalApproval.forEach(task=> { %>
+                              <div class="task-card <%= task.oncelik === 'acil' ? 'urgent' : '' %>">
+                                <div class="task-header">
+                                  <h3>
+                                    <%= task.islem_turu %>
+                                  </h3>
+                                  <span class="badge <%= task.oncelik === 'acil' ? 'badge-urgent' : 'badge-normal' %>">
+                                    <%= task.oncelik.toUpperCase() %>
+                                  </span>
+                                </div>
+                                <p><strong>Adliye:</strong>
+                                  <%= task.adliye %> | <strong>Müvekkil:</strong>
+                                    <%= task.muvekkil %> | <strong>Portföy:</strong>
+                                      <%= task.portfoy %>
+                                </p>
+                                <p><strong>İcra Dairesi:</strong>
+                                  <%= task.icra_dairesi || '-' %>
+                                </p>
+                                <p><strong>Dosya No:</strong>
+                                  <%= task.icra_esas_no || '-' %>
+                                </p>
+                                <% if (task.borclu || task.borclu_tckn_vkn) { %>`n <p><strong>Borçlu:</strong>`n <%=
+                                      task.borclu || '-' %>`n <% if (task.borclu_tckn_vkn) { %>`n |
+                                        <strong>TCKN:</strong>
+                                        <%= task.borclu_tckn_vkn %>`n <% } %>`n </p>`n <% } %>
+                                    <p><strong>Açıklama:</strong>
+                                      <%= task.islem_aciklamasi %>
+                                    </p>
+                                    <div style="display: flex; gap: 0.5rem; margin-top: 0.75rem;">
+                                      <form method="POST" action="/tasks/<%= task.id %>/final-approve"
+                                        class="scroll-form" style="display:inline; margin: 0;">
+                                        <input type="hidden" name="returnTo" value="yonetici-onay">
+                                        <button type="submit" class="btn-approve"
+                                          onclick="return confirm('Görevi onaylayıp arşivlemek istediğinizden emin misiniz?')">✅
+                                          Son Onay Ver</button>
+                                      </form>
+                                      <form method="POST" action="/tasks/<%= task.id %>/control" class="scroll-form"
+                                        style="display:inline; margin: 0;">
+                                        <input type="hidden" name="returnTo" value="yonetici-onay">
+                                        <input type="hidden" name="control_status" value="iade">
+                                        <button type="submit" class="btn-return"
+                                          onclick="return confirm('Görevi atanana iade etmek istediğinizden emin misiniz?')">↩️
+                                          İade Et</button>
+                                      </form>
+                                    </div>
+                                    <!-- Notes UI -->
+                                    <div class="note-controls" style="margin-top:0.5rem;">
+                                      <button type="button" class="btn btn-note"
+                                        onclick="toggleNotes('<%= task.id %>','yonetici-onay')">📝 Görev Notu (<%=
+                                          ((historiesByTask && historiesByTask[task.id]) || []).filter(h=>
+                                          h.action==='note').length %>)</button>
+                                    </div>
+                                    <div class="note-panel" id="notes-yonetici-onay-<%= task.id %>"
+                                      style="display:none; margin-top:0.5rem;">
+                                      <div class="notes-list">
+                                        <% if (historiesByTask && historiesByTask[task.id]) { %>
+                                          <% historiesByTask[task.id].filter(h=> h.action ===
+                                            'note').forEach(function(h){ %>
+                                            <div class="note-item">
+                                              <div class="note-meta"><strong>
+                                                  <%= users.find(function(u){ return u.id===h.user_id; })?.username
+                                                    || 'Anonim' %>
+                                                </strong> · <small>
+                                                  <%= new Date(h.created_at).toLocaleString('tr-TR') %>
+                                                </small></div>
+                                              <div class="note-body">
+                                                <%= h.details %>
+                                              </div>
+                                            </div>
+                                            <% }); %>
+                                              <% } %>
+                                      </div>
+                                      <form method="POST" action="/tasks/<%= task.id %>/note"
+                                        class="note-form scroll-form">
+                                        <input type="hidden" name="returnTo" value="yonetici-onay">
+                                        <textarea name="note" placeholder="Not ekleyin..." required></textarea>
+                                        <button type="submit" class="btn btn-primary"
+                                          style="margin-top:0.5rem;">Ekle</button>
+                                      </form>
+                                    </div>
+                              </div>
+                              <% }) %>
+                                <% } else { %>
+                                  <div class="empty-state">
+                                    <div class="empty-state-icon">✅</div>
+                                    <p>Son onay bekleyen görev yok</p>
+                                  </div>
+                                  <% } %>
+                        </section>
+                        <% } %>
 
 
 
@@ -1209,7 +1292,7 @@
         const statusVal = statusSel ? statusSel.value : '';
         const prioVal = prioSel ? prioSel.value : '';
 
-        document.querySelectorAll('.task-card[data-section]').forEach(function(card){
+        document.querySelectorAll('.task-card[data-section]').forEach(function (card) {
           if (card.getAttribute('data-section') !== section) return;
           const s = card.getAttribute('data-status') || '';
           const p = (card.getAttribute('data-oncelik') || '').toLowerCase();
@@ -1236,7 +1319,7 @@
     });
 
     // Scroll pozisyonunu koru (dashboard özel anahtar)
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
       const key = 'dashboardScrollPos';
       const saved = sessionStorage.getItem(key);
       if (saved) {
@@ -1245,8 +1328,8 @@
       }
 
       // Sadece .scroll-form sınıfı olan formları dinle
-      document.querySelectorAll('.scroll-form').forEach(function(form) {
-        form.addEventListener('submit', function() {
+      document.querySelectorAll('.scroll-form').forEach(function (form) {
+        form.addEventListener('submit', function () {
           sessionStorage.setItem(key, window.scrollY);
         });
       });

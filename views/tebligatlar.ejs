@@ -13,10 +13,13 @@
     <div class="app-container">
         <aside class="sidebar">
             <div class="sidebar-header">
-                <h2>İcra Takip</h2>
-                <p>
-                    <%= username %> (<%= role %>)
-                </p>
+                <img src="/favicon.png" alt="Logo" class="sidebar-logo">
+                <div class="sidebar-header-info">
+                    <h2>İCRA TAKİP</h2>
+                    <p>
+                        <%= username %> (<%= role %>)
+                    </p>
+                </div>
             </div>
             <nav class="sidebar-menu">
                 <a href="/dashboard" class="menu-item">
@@ -104,28 +107,15 @@
                         <table class="modern-table">
                             <thead>
                                 <tr>
-                                    <th>ID</th>feat: add user management functionality with create, update, and delete
-                                    operations
-
-                                    - Implemented user listing with filtering options for role and username.
-                                    - Added functionality to create new users with role assignment.
-                                    - Enabled updating user details including username, role, and password.
-                                    - Implemented user deletion with a safeguard against self-deletion.
-                                    - Integrated user management routes into the main application.
-                                    - Updated views to include user management interface with modern design.
-                                    - Added confirmation prompts for user deletion and editing actions.
-                                    - Enhanced dashboard with user statistics display for active tasks.
-                                    - Refactored task forms to maintain scroll position on submission.
-                                    - Improved error handling and user feedback for operations.
+                                    <th>ID</th>
                                     <th>Dosya No</th>
                                     <th>İcra Dairesi</th>
                                     <th>Müvekkil</th>
                                     <th>Portföy</th>
                                     <th>Taraf</th>
                                     <th>TCKN/VKN</th>
-                                    <th>Barkod</th>
-
                                     <th>Tarih</th>
+                                    <th>Barkod</th>
                                     <th>Not</th>
                                     <th>Ekleyen</th>
                                     <th>İşlemler</th>
@@ -154,6 +144,9 @@
                                             <%= t.tckn_vkn || '-' %>
                                         </td>
                                         <td>
+                                            <%= t.tarih %>
+                                        </td>
+                                        <td>
                                             <form method="POST" action="/tebligat/<%= t.id %>/update-barkod"
                                                 class="scroll-form" style="margin:0;">
                                                 <input type="text" name="barkod" value="<%= t.barkod || '' %>"
@@ -162,10 +155,6 @@
                                                 <button type="submit"
                                                     style="padding:0.4rem 0.6rem; background:#10b981; color:white; border:none; border-radius:6px; cursor:pointer; font-size:0.85rem;">✓</button>
                                             </form>
-                                        </td>
-
-                                        <td>
-                                            <%= t.tarih %>
                                         </td>
                                         <td>
                                             <form method="POST" action="/tebligat/<%= t.id %>/update-not"

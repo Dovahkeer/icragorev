@@ -48,6 +48,7 @@ async function initDatabase() {
           table.enum('status', [
             'tamamlanmadi',
             'kontrol_ediliyor',
+            'yapiliyor',
             'tamamlandi',
             'tamamlanamıyor',
             'iade',
@@ -65,6 +66,65 @@ async function initDatabase() {
         });
         console.log('✓ tasks tablosu oluşturuldu');
       }
+    
+        // If the tasks table existed previously, ensure the 'yapiliyor' status
+        // is allowed by recreating the table with the new enum if needed.
+        try {
+          const masterRow = await db.raw("SELECT sql FROM sqlite_master WHERE type='table' AND name='tasks'");
+          let createSql = '';
+          if (Array.isArray(masterRow)) {
+            if (masterRow[0] && masterRow[0].sql) createSql = masterRow[0].sql;
+            else if (masterRow[0] && Array.isArray(masterRow[0]) && masterRow[0][0] && masterRow[0][0].sql) createSql = masterRow[0][0].sql;
+          } else if (masterRow && masterRow.sql) {
+            createSql = masterRow.sql;
+          }
+
+          if (createSql && !createSql.includes("yapiliyor")) {
+            console.log("i) tasks tablosu enum güncellemesi: 'yapiliyor' ekleniyor...");
+            await db.transaction(async (trx) => {
+              await trx.schema.createTable('tasks_new', (table) => {
+                table.increments('id').primary();
+                table.string('adliye');
+                table.string('muvekkil');
+                table.string('portfoy');
+                table.string('borclu');
+                table.string('borclu_tckn_vkn');
+                table.string('icra_dairesi');
+                table.string('icra_esas_no');
+                table.string('islem_turu');
+                table.text('islem_aciklamasi');
+                table.enum('oncelik', ['acil', 'rutin']).defaultTo('rutin');
+                table.enum('status', [
+                  'tamamlanmadi',
+                  'kontrol_ediliyor',
+                  'yapiliyor',
+                  'tamamlandi',
+                  'tamamlanamıyor',
+                  'iade',
+                  'kontrol_bekleniyor',
+                  'uygun',
+                  'son_onay_bekliyor',
+                  'arsiv'
+                ]).defaultTo('tamamlanmadi');
+                table.integer('creator_id').unsigned().references('id').inTable('users');
+                table.integer('assignee_id').unsigned().references('id').inTable('users');
+                table.integer('manager_id').unsigned().references('id').inTable('users');
+                table.integer('last_status_by').unsigned().references('id').inTable('users');
+                table.date('eklenme_tarihi');
+                table.timestamps(true, true);
+              });
+
+              // copy data preserving column names
+              await trx.raw('INSERT INTO tasks_new (id, adliye, muvekkil, portfoy, borclu, borclu_tckn_vkn, icra_dairesi, icra_esas_no, islem_turu, islem_aciklamasi, oncelik, status, creator_id, assignee_id, manager_id, last_status_by, eklenme_tarihi, created_at, updated_at) SELECT id, adliye, muvekkil, portfoy, borclu, borclu_tckn_vkn, icra_dairesi, icra_esas_no, islem_turu, islem_aciklamasi, oncelik, status, creator_id, assignee_id, manager_id, last_status_by, eklenme_tarihi, created_at, updated_at FROM tasks');
+
+              await trx.schema.dropTable('tasks');
+              await trx.schema.renameTable('tasks_new', 'tasks');
+            });
+            console.log("✓ tasks tablosu enum güncellendi: 'yapiliyor' eklendi");
+          }
+        } catch (e) {
+          console.error('tasks enum güncelleme sırasında hata:', e);
+        }
     });
 
     await db.schema.hasTable('task_history').then(async (exists) => {
@@ -147,6 +207,7 @@ async function initDatabase() {
         { username: 'ozlemkoksal', password_hash: passwordPit10, role: 'atayan' },
         { username: 'serenaozyilmaz', password_hash: passwordPit10, role: 'atayan' },
         { username: 'topraksezgin', password_hash: passwordPit10, role: 'atayan' },
+        { username: 'caglatekman', password_hash: passwordPit10, role: 'atayan' },
         { username: 'ilaydaerdogan', password_hash: password123456, role: 'yonetici' },
         { username: 'ozgeaslan', password_hash: password123456, role: 'yonetici' },
         { username: 'omercanoruc', password_hash: password123456, role: 'atanan' },
@@ -178,6 +239,16 @@ async function initDatabase() {
         console.log("✓ 'humeyra' kullanıcısı eklendi (şifre: 123456)");
       } else {
         console.log("✓ 'humeyra' kullanıcısı zaten mevcut");
+      }
+
+      // Ensure caglatekman exists (atayan, şifre: pit10)
+      const passwordPit10 = await bcrypt.hash('pit10', 10);
+      const cagla = await db('users').where({ username: 'caglatekman' }).first();
+      if (!cagla) {
+        await db('users').insert({ username: 'caglatekman', password_hash: passwordPit10, role: 'atayan' });
+        console.log("✓ 'caglatekman' kullanıcısı eklendi (şifre: pit10)");
+      } else {
+        console.log("✓ 'caglatekman' kullanıcısı zaten mevcut");
       }
     } catch (e) {
       console.error('Kullanıcı güncelleme sırasında hata:', e);
