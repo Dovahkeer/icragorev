@@ -63,6 +63,20 @@
                     <input type="text" name="barkod" placeholder="Barkod No">
                     <input type="text" name="dosya_no" placeholder="Dosya No *" required>
                     <input type="text" name="icra_dairesi" placeholder="İcra Dairesi *" required>
+                    <div style="display:flex;gap:0.5rem;align-items:center;">
+                        <label style="display:flex;gap:0.5rem;align-items:center;margin:0;">
+                            <input type="radio" name="durum" value="itiraz" checked>
+                            <span>İtiraz</span>
+                        </label>
+                        <label style="display:flex;gap:0.5rem;align-items:center;margin:0;">
+                            <input type="radio" name="durum" value="gönderildi">
+                            <span>Gönderildi</span>
+                        </label>
+                        <label style="display:flex;gap:0.5rem;align-items:center;margin:0;">
+                            <input type="radio" name="durum" value="tebliğ">
+                            <span>Tebliğ</span>
+                        </label>
+                    </div>
                     <textarea name="not" placeholder="Not"></textarea>
                     <button type="submit">Oluştur</button>
                 </form>

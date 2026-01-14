@@ -254,6 +254,24 @@ async function initDatabase() {
       console.error('Kullanıcı güncelleme sırasında hata:', e);
     }
 
+    // Ensure additional requested atayan users exist with password 'faktoring'
+    try {
+      const passwordFaktoring = await bcrypt.hash('faktoring', 10);
+
+      const usersToEnsure = ['tugberkoznacar', 'ridvanyucel', 'sevvalfidan'];
+      for (const uname of usersToEnsure) {
+        const u = await db('users').where({ username: uname }).first();
+        if (!u) {
+          await db('users').insert({ username: uname, password_hash: passwordFaktoring, role: 'atayan' });
+          console.log(`✓ '${uname}' kullanıcısı eklendi (şifre: faktoring)`);
+        } else {
+          console.log(`✓ '${uname}' kullanıcısı zaten mevcut`);
+        }
+      }
+    } catch (e) {
+      console.error('Ek kullanıcı ekleme sırasında hata:', e);
+    }
+
     console.log('✓ Veritabanı hazır!');
   } catch (error) {
     console.error('Veritabanı hatası:', error);

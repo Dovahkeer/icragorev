@@ -20,7 +20,7 @@ router.get('/dashboard', requireAuth, async (req, res) => {
     if (role === 'atayan') {
       const myTasks = await db('tasks')
         .where('creator_id', userId)
-        .whereIn('status', ['tamamlanmadi', 'kontrol_ediliyor', 'yapiliyor', 'tamamlandi', 'tamamlanamıyor', 'iade'])
+        .whereIn('status', ['tamamlanmadi', 'kontrol_ediliyor', 'kontrol_bekleniyor', 'yapiliyor', 'tamamlandi', 'tamamlanamıyor', 'iade'])
         .select('tasks.*');
 
       const forApproval = await db('tasks')
@@ -49,7 +49,7 @@ router.get('/dashboard', requireAuth, async (req, res) => {
         .select('tasks.*');
 
       const forControl = await db('tasks')
-        .whereIn('status', ['kontrol_ediliyor', 'tamamlandi', 'tamamlanamıyor'])
+        .whereIn('status', ['kontrol_ediliyor', 'kontrol_bekleniyor', 'tamamlandi', 'tamamlanamıyor'])
         .whereNotNull('assignee_id')
         .orderBy('created_at', 'desc')
         .select('tasks.*');
@@ -63,7 +63,7 @@ router.get('/dashboard', requireAuth, async (req, res) => {
       // Yöneticiye atanan görevler (kendisine atadığı görevler)
       const myAssignedTasks = await db('tasks')
         .where('assignee_id', userId)
-        .whereIn('status', ['tamamlanmadi', 'yapiliyor', 'kontrol_ediliyor', 'iade'])
+        .whereIn('status', ['tamamlanmadi', 'yapiliyor', 'kontrol_ediliyor', 'kontrol_bekleniyor', 'iade'])
         .orderBy('created_at', 'desc')
         .select('tasks.*');
 
@@ -84,11 +84,11 @@ router.get('/dashboard', requireAuth, async (req, res) => {
     } else if (role === 'atanan') {
       const myTasks = await db('tasks')
         .where('assignee_id', userId)
-        .whereIn('status', ['tamamlanmadi', 'yapiliyor', 'kontrol_ediliyor', 'tamamlandi', 'tamamlanamıyor', 'iade'])
+        .whereIn('status', ['tamamlanmadi', 'yapiliyor', 'kontrol_ediliyor', 'kontrol_bekleniyor', 'tamamlandi', 'tamamlanamıyor', 'iade'])
         .select('tasks.*');
 
       const completed = myTasks.filter(t => t.status === 'tamamlandi' || t.status === 'tamamlanamıyor').length;
-      const inProgress = myTasks.filter(t => t.status === 'kontrol_ediliyor' || t.status === 'yapiliyor').length;
+      const inProgress = myTasks.filter(t => (t.status === 'kontrol_ediliyor' || t.status === 'kontrol_bekleniyor') || t.status === 'yapiliyor').length;
       const pending = myTasks.filter(t => t.status === 'tamamlanmadi' || t.status === 'iade').length;
 
       tasks = myTasks;
@@ -315,10 +315,12 @@ router.post('/tasks/:id/status', requireAuth, async (req, res) => {
       finalStatus = 'yapiliyor';
       updateData.status = finalStatus;
     } else if (status === 'tamamlandi' || status === 'tamamlanamıyor') {
-      // mark for control and ensure manager is set when needed
-      finalStatus = 'kontrol_ediliyor';
+      // send to manager control queue first, ensure manager is set when needed
+      finalStatus = 'kontrol_bekleniyor';
       updateData.status = finalStatus;
 
+      // if task has no manager assigned yet, keep existing behavior: if the
+      // actor is a manager, set them as manager; otherwise leave manager_id as-is
       if (!task.manager_id && role === 'yonetici') {
         updateData.manager_id = req.session.userId;
       }
