@@ -4,6 +4,17 @@ const { requireAuth, requireRole } = require('../middleware/auth');
 
 const router = express.Router();
 
+// Helper function: Filtreleri koruyarak redirect URL'i oluştur
+function buildRedirectUrl(baseUrl, query) {
+  const params = new URLSearchParams();
+  if (query.ekleyen) params.append('ekleyen', query.ekleyen);
+  if (query.icra_dairesi) params.append('icra_dairesi', query.icra_dairesi);
+  if (query.muvekkil) params.append('muvekkil', query.muvekkil);
+  if (query.durum) params.append('durum', query.durum);
+
+  const queryString = params.toString();
+  return queryString ? `${baseUrl}?${queryString}` : baseUrl;
+}
 
 router.get('/tebligatlar', requireAuth, async (req, res) => {
   try {
@@ -61,7 +72,10 @@ router.post('/tebligat/create', requireAuth, async (req, res) => {
       created_by: req.session.userId,
       updated_by: req.session.userId
     });
-    return res.redirect('/tebligatlar');
+
+    // Filtreleri koruyarak redirect
+    const redirectUrl = buildRedirectUrl('/tebligatlar', req.query);
+    return res.redirect(redirectUrl);
   } catch (err) {
     console.error('Tebligat oluşturma hatası:', err);
     res.status(500).send('Tebligat oluşturulamadı');
@@ -72,25 +86,45 @@ router.post('/tebligat/:id/update-status', requireAuth, async (req, res) => {
   try {
     const id = req.params.id;
     const { durum } = req.body;
-    
-    // Eğer durum "tebliğ" ise, arşive taşı
-    if (durum === 'tebliğ') {
+
+    // Eğer durum "tebliğ" (Kesinleşti) veya "itiraz" ise, arşive taşı
+    if (durum === 'tebliğ' || durum === 'itiraz') {
       const tebligat = await db('tebligatlar').where({ id }).first();
-      
-      // Tebligatı arşiv tablosuna ekle
-      await db('tebligat_arsiv').insert({
-        ...tebligat,
-        arsivlenme_tarihi: new Date().toISOString().split('T')[0],
-        arsivleyen: req.session.userId
-      });
-      
-      // Tebligatı sil
-      await db('tebligatlar').where({ id }).del();
+
+      if (tebligat) {
+        // Tebligatı arşiv tablosuna ekle
+        await db('tebligat_arsiv').insert({
+          muvekkil: tebligat.muvekkil,
+          portfoy: tebligat.portfoy,
+          taraf: tebligat.taraf,
+          tckn_vkn: tebligat.tckn_vkn,
+          barkod: tebligat.barkod,
+          dosya_no: tebligat.dosya_no,
+          icra_dairesi: tebligat.icra_dairesi,
+          durum: durum, // Güncel durumu kaydet
+          tarih: tebligat.tarih,
+          notlar: tebligat.notlar,
+          created_by: tebligat.created_by,
+          updated_by: req.session.userId,
+          arsivlenme_tarihi: new Date().toISOString().split('T')[0],
+          arsivleyen: req.session.userId
+        });
+
+        // Tebligatı sil
+        await db('tebligatlar').where({ id }).del();
+      }
     } else {
-      await db('tebligatlar').where({ id }).update({ durum, updated_by: req.session.userId, updated_at: db.fn.now() });
+      // Diğer durumlar için sadece güncelle
+      await db('tebligatlar').where({ id }).update({
+        durum,
+        updated_by: req.session.userId,
+        updated_at: db.fn.now()
+      });
     }
-    
-    return res.redirect('/tebligatlar');
+
+    // Filtreleri koruyarak redirect
+    const redirectUrl = buildRedirectUrl('/tebligatlar', req.query);
+    return res.redirect(redirectUrl);
   } catch (err) {
     console.error('Tebligat durum güncelleme hatası:', err);
     res.status(500).send('Güncellenemedi');
@@ -101,8 +135,15 @@ router.post('/tebligat/:id/update-barkod', requireAuth, async (req, res) => {
   try {
     const id = req.params.id;
     const { barkod } = req.body;
-    await db('tebligatlar').where({ id }).update({ barkod, updated_by: req.session.userId, updated_at: db.fn.now() });
-    return res.redirect('/tebligatlar');
+    await db('tebligatlar').where({ id }).update({
+      barkod,
+      updated_by: req.session.userId,
+      updated_at: db.fn.now()
+    });
+
+    // Filtreleri koruyarak redirect
+    const redirectUrl = buildRedirectUrl('/tebligatlar', req.query);
+    return res.redirect(redirectUrl);
   } catch (err) {
     console.error('Tebligat barkod güncelleme hatası:', err);
     res.status(500).send('Güncellenemedi');
@@ -113,8 +154,15 @@ router.post('/tebligat/:id/update-not', requireAuth, async (req, res) => {
   try {
     const id = req.params.id;
     const { notlar } = req.body;
-    await db('tebligatlar').where({ id }).update({ notlar, updated_by: req.session.userId, updated_at: db.fn.now() });
-    return res.redirect('/tebligatlar');
+    await db('tebligatlar').where({ id }).update({
+      notlar,
+      updated_by: req.session.userId,
+      updated_at: db.fn.now()
+    });
+
+    // Filtreleri koruyarak redirect
+    const redirectUrl = buildRedirectUrl('/tebligatlar', req.query);
+    return res.redirect(redirectUrl);
   } catch (err) {
     console.error('Tebligat not güncelleme hatası:', err);
     res.status(500).send('Güncellenemedi');
@@ -125,8 +173,15 @@ router.post('/tebligat/:id/update-user', requireAuth, async (req, res) => {
   try {
     const id = req.params.id;
     const { created_by } = req.body;
-    await db('tebligatlar').where({ id }).update({ created_by: created_by || null, updated_by: req.session.userId, updated_at: db.fn.now() });
-    return res.redirect('/tebligatlar');
+    await db('tebligatlar').where({ id }).update({
+      created_by: created_by || null,
+      updated_by: req.session.userId,
+      updated_at: db.fn.now()
+    });
+
+    // Filtreleri koruyarak redirect
+    const redirectUrl = buildRedirectUrl('/tebligatlar', req.query);
+    return res.redirect(redirectUrl);
   } catch (err) {
     console.error('Tebligat kullanıcı güncelleme hatası:', err);
     res.status(500).send('Güncellenemedi');
@@ -137,7 +192,10 @@ router.post('/tebligat/:id/delete', requireAuth, async (req, res) => {
   try {
     const id = req.params.id;
     await db('tebligatlar').where({ id }).del();
-    return res.redirect('/tebligatlar');
+
+    // Filtreleri koruyarak redirect
+    const redirectUrl = buildRedirectUrl('/tebligatlar', req.query);
+    return res.redirect(redirectUrl);
   } catch (err) {
     console.error('Tebligat silme hatası:', err);
     res.status(500).send('Silinemedi');

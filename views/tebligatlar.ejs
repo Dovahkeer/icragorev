@@ -55,7 +55,8 @@
             <!-- Tebligat Oluştur -->
             <section id="tebligat-olustur" class="section active" style="margin-bottom: 2rem;">
                 <h2>Tebligat Oluştur</h2>
-                <form method="POST" action="/tebligat/create" class="task-form">
+                <form method="POST" action="/tebligat/create?<%= new URLSearchParams(filters).toString() %>"
+                    class="task-form">
                     <input type="text" name="muvekkil" placeholder="Müvekkil">
                     <input type="text" name="portfoy" placeholder="Portföy">
                     <input type="text" name="taraf" placeholder="Taraf">
@@ -74,7 +75,7 @@
                         </label>
                         <label style="display:flex;gap:0.5rem;align-items:center;margin:0;">
                             <input type="radio" name="durum" value="tebliğ">
-                            <span>Tebliğ</span>
+                            <span>Kesinleşti</span>
                         </label>
                     </div>
                     <textarea name="not" placeholder="Not"></textarea>
@@ -92,7 +93,7 @@
                         <option value="gönderildi" <%=filters.durum==='gönderildi' ? 'selected' : '' %>>Gönderildi
                         </option>
                         <option value="itiraz" <%=filters.durum==='itiraz' ? 'selected' : '' %>>İtiraz</option>
-                        <option value="tebliğ" <%=filters.durum==='tebliğ' ? 'selected' : '' %>>Tebliğ</option>
+                        <option value="tebliğ" <%=filters.durum==='tebliğ' ? 'selected' : '' %>>Kesinleşti</option>
                         <option value="iade" <%=filters.durum==='iade' ? 'selected' : '' %>>İade</option>
                     </select>
                     <input type="text" name="icra_dairesi" placeholder="İcra Dairesi"
@@ -161,7 +162,8 @@
                                             <%= t.tarih %>
                                         </td>
                                         <td>
-                                            <form method="POST" action="/tebligat/<%= t.id %>/update-barkod"
+                                            <form method="POST"
+                                                action="/tebligat/<%= t.id %>/update-barkod?<%= new URLSearchParams(filters).toString() %>"
                                                 class="scroll-form" style="margin:0;">
                                                 <input type="text" name="barkod" value="<%= t.barkod || '' %>"
                                                     placeholder="Barkod"
@@ -171,7 +173,8 @@
                                             </form>
                                         </td>
                                         <td>
-                                            <form method="POST" action="/tebligat/<%= t.id %>/update-not"
+                                            <form method="POST"
+                                                action="/tebligat/<%= t.id %>/update-not?<%= new URLSearchParams(filters).toString() %>"
                                                 class="scroll-form" style="margin:0;">
                                                 <textarea name="notlar" placeholder="Not ekle..."
                                                     style="padding:0.4rem; border-radius:6px; border:1px solid #e0e0e0; width:200px; min-height:60px; resize:vertical;"><%= t.notlar || '' %></textarea>
@@ -180,11 +183,12 @@
                                             </form>
                                         </td>
                                         <td>
-                                            <form method="POST" action="/tebligat/<%= t.id %>/update-user"
+                                            <form method="POST"
+                                                action="/tebligat/<%= t.id %>/update-user?<%= new URLSearchParams(filters).toString() %>"
                                                 class="scroll-form" style="margin:0;">
                                                 <select name="created_by"
                                                     style="padding:0.4rem; border-radius:6px; border:1px solid #e0e0e0; width:120px;">
-                                                    <option value="">-</option>
+                                                    <option value="">Seçiniz</option>
                                                     <% users.forEach(function(u) { %>
                                                         <option value="<%= u.id %>" <%=t.created_by==u.id ? 'selected'
                                                             : '' %>><%= u.username %>
@@ -197,27 +201,29 @@
                                         </td>
                                         <td>
                                             <div style="display:flex; gap:0.5rem; align-items:center;">
-                                                <form method="POST" action="/tebligat/<%= t.id %>/update-status"
+                                                <form method="POST"
+                                                    action="/tebligat/<%= t.id %>/update-status?<%= new URLSearchParams(filters).toString() %>"
                                                     class="scroll-form"
                                                     style="display:flex; gap:0.5rem; align-items:center; flex:1;">
                                                     <select name="durum"
                                                         style="padding:0.5rem; border-radius:6px; border:1px solid #e0e0e0; flex:1;">
-                                                        <option value="">-</option>
+                                                        <option value="">Tebliğ</option>
 
                                                         <option value="gönderildi" <%=t.durum==='gönderildi'
                                                             ? 'selected' : '' %>>Gönderildi</option>
                                                         <option value="itiraz" <%=t.durum==='itiraz' ? 'selected' : ''
                                                             %>>İtiraz</option>
                                                         <option value="tebliğ" <%=t.durum==='tebliğ' ? 'selected' : ''
-                                                            %>>Tebliğ</option>
-                                                        <option value="iade" <%=t.durum==='iade' ? 'selected' : '' %>
-                                                            >İade</option>
+                                                            %>>Kesinleşti</option>
+                                                        <option value="iade" <%=t.durum==='iade' ? 'selected' : '' %>>
+                                                            İade</option>
                                                     </select>
                                                     <button type="submit"
                                                         style="padding:0.5rem 1rem; background:#667eea; color:white; border:none; border-radius:6px; cursor:pointer;">Güncelle</button>
                                                 </form>
                                                 <% if (role==='yonetici' ) { %>
-                                                    <form method="POST" action="/tebligat/<%= t.id %>/delete"
+                                                    <form method="POST"
+                                                        action="/tebligat/<%= t.id %>/delete?<%= new URLSearchParams(filters).toString() %>"
                                                         class="scroll-form" style="margin:0;">
                                                         <button type="submit"
                                                             onclick="return confirm('Bu tebligatı silmek istediğinizden emin misiniz?')"

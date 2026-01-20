@@ -1,0 +1,12 @@
+{
+    "sqltools.connections": [
+        {
+            "previewLimit": 50,
+            "driver": "SQLite",
+            "database": "${workspaceFolder:icragorev}/data/app.db",
+            "name": "ilayda",
+            "group": "ilayda"
+        }
+    ],
+    "sqltools.useNodeRuntime": true
+}

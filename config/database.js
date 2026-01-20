@@ -152,7 +152,7 @@ async function initDatabase() {
           table.string('barkod');
           table.string('dosya_no'); // YENİ: İcra esas numarası
           table.string('icra_dairesi'); // YENİ: İcra dairesi
-          table.enum('durum', ['itiraz', 'tebliğ', 'iade']).defaultTo('itiraz');
+          table.enum('durum', ['itiraz', 'kesinleşti', 'iade']).defaultTo('itiraz');
           table.date('tarih');
           table.text('notlar');
           table.integer('created_by').unsigned().references('id').inTable('users');
