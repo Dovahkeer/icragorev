@@ -303,7 +303,7 @@
                   <option value="">Tüm Durumlar</option>
                   <option value="tamamlanmadi">Tamamlanmadı</option>
                   <option value="yapiliyor">Yapılıyor</option>
-                  
+
                   <option value="tamamlandi">Tamamlandı</option>
                   <option value="iade">İade</option>
                 </select>
@@ -371,66 +371,110 @@
                                 <%= task.islem_aciklamasi %>
                               </p>
                               <% } %>
-                                <p><strong>Durum:</strong>
-                                  <%= task.status || 'tamamlanmadi' %>
-                                </p>
-                                <% if (task.eklenme_tarihi) { %>
-                                  <p><strong>Tarih:</strong>
-                                    <%= task.eklenme_tarihi %>
+                                <% if (task.assignee_id) { %>
+                                  <p><strong>Atanan:</strong>
+                                    <%= users.find(u => u.id === task.assignee_id)?.username || task.assignee_id %>
                                   </p>
                                   <% } %>
-
-                                    <% if (role==='atanan' ) { %>
-                                      <form method="POST" action="/tasks/<%= task.id %>/status" class="scroll-form"
-                                        style="margin-top: 0.75rem;">
-                                        <input type="hidden" name="returnTo" value="bana-atanan">
-                                        <select name="status" required onchange="checkConfirm(this)"
-                                          style="margin-bottom: 0.5rem;">
-                                          <option value="">Durum Değiştir</option>
-                                          <option value="yapiliyor" <%=task.status==='yapiliyor' ? 'selected' : '' %>>Yapılıyor</option>
-                                          <option value="tamamlandi">Tamamlandı</option>
-                                          <option value="tamamlanamıyor">Tamamlanamıyor</option>
-                                          <option value="iade" <%=task.status==='iade' ? 'selected' : '' %>>İade
-                                          </option>
-                                        </select>
-                                        <button type="submit">Güncelle</button>
-                                      </form>
-                                      <!-- Notes UI -->
-                                      <div class="note-controls" style="margin-top:0.5rem;">
-                                        <button type="button" class="btn btn-note"
-                                          onclick="toggleNotes('<%= task.id %>','gorevler')">📝 Görev Notu (<%=
-                                            ((historiesByTask && historiesByTask[task.id]) || []).filter(h=>
-                                            h.action==='note').length %>)</button>
-                                      </div>
-                                      <div class="note-panel" id="notes-gorevler-<%= task.id %>"
-                                        style="display:none; margin-top:0.5rem;">
-                                        <div class="notes-list">
-                                          <% if (historiesByTask && historiesByTask[task.id]) { %>
-                                            <% historiesByTask[task.id].filter(h=> h.action ===
-                                              'note').forEach(function(h){ %>
-                                              <div class="note-item">
-                                                <div class="note-meta"><strong>
-                                                    <%= users.find(function(u){ return u.id===h.user_id; })?.username
-                                                      || 'Anonim' %>
-                                                  </strong> · <small>
-                                                    <%= new Date(h.created_at).toLocaleString('tr-TR') %>
-                                                  </small></div>
-                                                <div class="note-body">
-                                                  <%= h.details %>
-                                                </div>
-                                              </div>
-                                              <% }); %>
-                                                <% } %>
-                                        </div>
-                                        <form method="POST" action="/tasks/<%= task.id %>/note"
-                                          class="note-form scroll-form">
-                                          <input type="hidden" name="returnTo" value="gorevler">
-                                          <textarea name="note" placeholder="Not ekleyin..." required></textarea>
-                                          <button type="submit" class="btn btn-primary"
-                                            style="margin-top:0.5rem;">Ekle</button>
-                                        </form>
-                                      </div>
+                                    <p><strong>Durum:</strong>
+                                      <%= task.status || 'tamamlanmadi' %>
+                                    </p>
+                                    <% if (task.eklenme_tarihi) { %>
+                                      <p><strong>Tarih:</strong>
+                                        <%= task.eklenme_tarihi %>
+                                      </p>
                                       <% } %>
+
+                                        <% if (role==='atayan' || role==='yonetici' ) { %>
+                                          <!-- Atayan/Yönetici notları her zaman görebilir/ekleyebilir -->
+                                          <div class="note-controls" style="margin-top:0.5rem;">
+                                            <button type="button" class="btn btn-note"
+                                              onclick="toggleNotes('<%= task.id %>','gorevler')">📝 Görev Notu (<%=
+                                                ((historiesByTask && historiesByTask[task.id]) || []).filter(h=>
+                                                h.action==='note').length %>)</button>
+                                          </div>
+                                          <div class="note-panel" id="notes-gorevler-<%= task.id %>"
+                                            style="display:none; margin-top:0.5rem;">
+                                            <div class="notes-list">
+                                              <% if (historiesByTask && historiesByTask[task.id]) { %>
+                                                <% historiesByTask[task.id].filter(h=> h.action ===
+                                                  'note').forEach(function(h){ %>
+                                                  <div class="note-item">
+                                                    <div class="note-meta"><strong>
+                                                        <%= users.find(function(u){ return u.id===h.user_id; })?.username
+                                                          || 'Anonim' %>
+                                                      </strong> · <small>
+                                                        <%= new Date(h.created_at).toLocaleString('tr-TR') %>
+                                                      </small></div>
+                                                    <div class="note-body">
+                                                      <%= h.details %>
+                                                    </div>
+                                                  </div>
+                                                  <% }); %>
+                                                    <% } %>
+                                            </div>
+                                            <form method="POST" action="/tasks/<%= task.id %>/note"
+                                              class="note-form scroll-form">
+                                              <input type="hidden" name="returnTo" value="gorevler">
+                                              <textarea name="note" placeholder="Not ekleyin..." required></textarea>
+                                              <button type="submit" class="btn btn-primary"
+                                                style="margin-top:0.5rem;">Ekle</button>
+                                            </form>
+                                          </div>
+                                          <% } %>
+
+                                            <% if (role==='atanan' ) { %>
+                                              <form method="POST" action="/tasks/<%= task.id %>/status" class="scroll-form"
+                                                style="margin-top: 0.75rem;">
+                                                <input type="hidden" name="returnTo" value="bana-atanan">
+                                                <select name="status" required onchange="checkConfirm(this)"
+                                                  style="margin-bottom: 0.5rem;">
+                                                  <option value="">Durum Değiştir</option>
+                                                  <option value="yapiliyor" <%=task.status==='yapiliyor' ? 'selected' : '' %>
+                                                    >Yapılıyor</option>
+                                                  <option value="tamamlandi">Tamamlandı</option>
+                                                  <option value="tamamlanamıyor">Tamamlanamıyor</option>
+                                                  <option value="iade" <%=task.status==='iade' ? 'selected' : '' %>>İade
+                                                  </option>
+                                                </select>
+                                                <button type="submit">Güncelle</button>
+                                              </form>
+                                              <!-- Notes UI -->
+                                              <div class="note-controls" style="margin-top:0.5rem;">
+                                                <button type="button" class="btn btn-note"
+                                                  onclick="toggleNotes('<%= task.id %>','gorevler')">📝 Görev Notu (<%=
+                                                    ((historiesByTask && historiesByTask[task.id]) || []).filter(h=>
+                                                    h.action==='note').length %>)</button>
+                                              </div>
+                                              <div class="note-panel" id="notes-gorevler-<%= task.id %>"
+                                                style="display:none; margin-top:0.5rem;">
+                                                <div class="notes-list">
+                                                  <% if (historiesByTask && historiesByTask[task.id]) { %>
+                                                    <% historiesByTask[task.id].filter(h=> h.action ===
+                                                      'note').forEach(function(h){ %>
+                                                      <div class="note-item">
+                                                        <div class="note-meta"><strong>
+                                                            <%= users.find(function(u){ return u.id===h.user_id; })?.username
+                                                              || 'Anonim' %>
+                                                          </strong> · <small>
+                                                            <%= new Date(h.created_at).toLocaleString('tr-TR') %>
+                                                          </small></div>
+                                                        <div class="note-body">
+                                                          <%= h.details %>
+                                                        </div>
+                                                      </div>
+                                                      <% }); %>
+                                                        <% } %>
+                                                </div>
+                                                <form method="POST" action="/tasks/<%= task.id %>/note"
+                                                  class="note-form scroll-form">
+                                                  <input type="hidden" name="returnTo" value="gorevler">
+                                                  <textarea name="note" placeholder="Not ekleyin..." required></textarea>
+                                                  <button type="submit" class="btn btn-primary"
+                                                    style="margin-top:0.5rem;">Ekle</button>
+                                                </form>
+                                              </div>
+                                              <% } %>
                       </div>
                       <% }) %>
                         <% } else { %>
@@ -441,15 +485,16 @@
                           <% } %>
           </section>
 
-          <% if (role==='yonetici' || role==='atayan') { %>
+          <% if (role==='yonetici' || role==='atayan' ) { %>
             <!-- Adliye Listesi (Yöneticiler ve Atayanlar görebilir) -->
             <section id="adliye-listesi" class="section">
               <h2>Adliye Listesi</h2>
               <div class="adliye-container">
                 <aside class="adliye-sidebar">
                   <h4 style="margin-bottom: 1rem; color: #2c3e50;">Adliyeler</h4>
-                  <% (adliyeler || []).forEach(function(a, idx){ %>
-                    <button type="button" onclick="showAdliye('<%= a %>')"
+                  <% (adliyeler || []).forEach(function(a, idx){ var safeA=a.replace(/[^a-zA-Z0-9]/g, '_'
+                    ).replace(/_+/g, '_' ); %>
+                    <button type="button" onclick="showAdliye('<%= safeA %>');"
                       class="adliye-btn <%= idx === 0 ? 'active' : '' %>">
                       <span class="adliye-icon">🏛️</span>
                       <span>
@@ -459,13 +504,14 @@
                     <% }) %>
                 </aside>
                 <div class="adliye-content">
-                  <% (adliyeler || []).forEach(function(a, idx){ var safeA = a.replace(/\s+/g,'_'); %>
+                  <% (adliyeler || []).forEach(function(a, idx){ var safeA=a.replace(/[^a-zA-Z0-9]/g, '_'
+                    ).replace(/_+/g, '_' ); %>
                     <div class="adliye-panel <%= idx === 0 ? '' : 'hidden' %>" id="adliye-<%= safeA %>">
                       <div class="adliye-header">
                         <h3>
                           <%= a %>
                         </h3>
-                        <button type="button" onclick="copyTable('tbl-<%= safeA %>')" class="copy-btn">
+                        <button type="button" onclick="copyTable('tbl-<%= safeA %>');" class="copy-btn">
                           📋 Tabloyu Kopyala
                         </button>
                       </div>
@@ -565,10 +611,18 @@
                       <option value="Birikim">Birikim</option>
                       <option value="Emir">Emir</option>
                       <option value="Birleşim">Birleşim</option>
+                      <option value="GSD Faktoring">GSD Faktoring</option>
+                      <option value="ULUSAL Faktoring">Ulusal Faktoring</option>
+                      <option value="OPTİMA Faktoring">Optima Faktoring</option>
+                      <option value="SÜMER Faktoring">Sümer Faktoring</option>
+                      <option value="AK Faktoring">AK Faktoring</option>
+                      <option value="EKO Faktoring">EKO Faktoring</option>
+                      <option value="TEB Faktoring">TEB Faktoring</option>
                     </select>
 
                     <select name="portfoy" required>
                       <option value="">Portföy Seçin *</option>
+                      <option value="GSD Faktoring">Faktoringler</option>
                       <option value="Fiba 01">Fiba 01</option>
                       <option value="Fiba 02">Fiba 02</option>
                       <option value="Fiba 03">Fiba 03</option>
@@ -587,6 +641,7 @@
                       <option value="Garantibank">Garantibank</option>
                       <option value="Garanti Faktöring">Garanti Faktöring</option>
                       <option value="İNG">İNG</option>
+
                     </select>
 
                     <input type="text" name="borclu" placeholder="Borçlu">
@@ -801,11 +856,11 @@
                                 <% if (task.borclu || task.borclu_tckn_vkn) { %>
                                   <p><strong>Borçlu:</strong>
                                     <%= task.borclu || '-' %>
-                                    <% if (task.borclu_tckn_vkn) { %> | <strong>TCKN:</strong>
-                                      <%= task.borclu_tckn_vkn %>
-                                    <% } %>
+                                      <% if (task.borclu_tckn_vkn) { %> | <strong>TCKN:</strong>
+                                        <%= task.borclu_tckn_vkn %>
+                                          <% } %>
                                   </p>
-                                <% } %>
+                                  <% } %>
                                     <p><strong>Açıklama:</strong>
                                       <%= task.islem_aciklamasi %>
                                     </p>
@@ -1145,11 +1200,11 @@
                                 <% if (task.borclu || task.borclu_tckn_vkn) { %>
                                   <p><strong>Borçlu:</strong>
                                     <%= task.borclu || '-' %>
-                                    <% if (task.borclu_tckn_vkn) { %> | <strong>TCKN:</strong>
-                                      <%= task.borclu_tckn_vkn %>
-                                    <% } %>
+                                      <% if (task.borclu_tckn_vkn) { %> | <strong>TCKN:</strong>
+                                        <%= task.borclu_tckn_vkn %>
+                                          <% } %>
                                   </p>
-                                <% } %>
+                                  <% } %>
                                     <p><strong>Açıklama:</strong>
                                       <%= task.islem_aciklamasi %>
                                     </p>
@@ -1269,11 +1324,11 @@
         console.log('Not paneli kapatıldı');
       }
     }
-    function showAdliye(name) {
+    function showAdliye(safeA) {
       document.querySelectorAll('.adliye-panel').forEach(p => p.style.display = 'none');
       document.querySelectorAll('.adliye-btn').forEach(b => b.classList.remove('active'));
       try {
-        const el = document.getElementById('adliye-' + name);
+        const el = document.getElementById('adliye-' + safeA);
         if (el) el.style.display = 'block';
         if (typeof event !== 'undefined' && event && event.target) {
           const btn = event.target.closest('.adliye-btn');

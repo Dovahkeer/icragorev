@@ -82,6 +82,69 @@ router.post('/tebligat/create', requireAuth, async (req, res) => {
   }
 });
 
+// Genel güncelleme endpoint'i (Modal formdan gelecek)
+router.post('/tebligat/:id/update', requireAuth, async (req, res) => {
+  try {
+    const id = req.params.id;
+    const { muvekkil, portfoy, taraf, tckn_vkn, barkod, dosya_no, icra_dairesi, durum, tarih, created_by, notlar } = req.body;
+
+    // Mevcut tebligatı al
+    const currentTebligat = await db('tebligatlar').where({ id }).first();
+
+    if (!currentTebligat) {
+      return res.status(404).send('Tebligat bulunamadı');
+    }
+
+    // Eğer durum "tebliğ" (Kesinleşti) veya "itiraz" ise, arşive taşı
+    if (durum === 'tebliğ' || durum === 'itiraz') {
+      // Tebligatı arşiv tablosuna ekle
+      await db('tebligat_arsiv').insert({
+        muvekkil: muvekkil || currentTebligat.muvekkil,
+        portfoy: portfoy || currentTebligat.portfoy,
+        taraf: taraf || currentTebligat.taraf,
+        tckn_vkn: tckn_vkn || currentTebligat.tckn_vkn,
+        barkod: barkod || currentTebligat.barkod,
+        dosya_no: dosya_no || currentTebligat.dosya_no,
+        icra_dairesi: icra_dairesi || currentTebligat.icra_dairesi,
+        durum: durum,
+        tarih: tarih || currentTebligat.tarih,
+        notlar: notlar || currentTebligat.notlar,
+        created_by: created_by || currentTebligat.created_by,
+        updated_by: req.session.userId,
+        arsivlenme_tarihi: new Date().toISOString().split('T')[0],
+        arsivleyen: req.session.userId
+      });
+
+      // Tebligatı sil
+      await db('tebligatlar').where({ id }).del();
+    } else {
+      // Normal güncelleme
+      await db('tebligatlar').where({ id }).update({
+        muvekkil: muvekkil || null,
+        portfoy: portfoy || null,
+        taraf: taraf || null,
+        tckn_vkn: tckn_vkn || null,
+        barkod: barkod || null,
+        dosya_no: dosya_no || null,
+        icra_dairesi: icra_dairesi || null,
+        durum: durum || 'gönderildi',
+        tarih: tarih || null,
+        created_by: created_by || null,
+        notlar: notlar || null,
+        updated_by: req.session.userId,
+        updated_at: db.fn.now()
+      });
+    }
+
+    // Filtreleri koruyarak redirect
+    const redirectUrl = buildRedirectUrl('/tebligatlar', req.query);
+    return res.redirect(redirectUrl);
+  } catch (err) {
+    console.error('Tebligat güncelleme hatası:', err);
+    res.status(500).send('Güncellenemedi');
+  }
+});
+
 router.post('/tebligat/:id/update-status', requireAuth, async (req, res) => {
   try {
     const id = req.params.id;

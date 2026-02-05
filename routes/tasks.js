@@ -208,7 +208,7 @@ router.post('/tasks/create', requireRole('atayan', 'yonetici'), async (req, res)
   try {
     console.log('📝 Yeni görev oluşturuluyor...');
     console.log('İcra Dairesi:', icra_dairesi);
-    
+
     const adliye = computeAdliye(icra_dairesi);
     console.log('Hesaplanan Adliye:', adliye);
 
@@ -370,7 +370,7 @@ router.post('/tasks/:id/note', requireAuth, async (req, res) => {
 
 // (Note route removed)
 
-router.post('/tasks/:id/control', requireRole('yonetici'), async (req, res) => {
+router.post('/tasks/:id/control', requireRole('atayan', 'yonetici'), async (req, res) => {
   const { id } = req.params;
   const { control_status } = req.body;
 
@@ -429,7 +429,7 @@ router.post('/tasks/:id/move-to-office', requireRole('yonetici'), async (req, re
 
     // Ensure there's a column to store previous adliye; add if missing (SQLite)
     const cols = await db.raw("PRAGMA table_info('tasks')");
-    const colNames = (cols && cols.rows) ? cols.rows.map(r => r.name) : (Array.isArray(cols) ? cols.map(r=>r.name) : []);
+    const colNames = (cols && cols.rows) ? cols.rows.map(r => r.name) : (Array.isArray(cols) ? cols.map(r => r.name) : []);
     if (!colNames.includes('adliye_prev')) {
       await db.raw("ALTER TABLE tasks ADD COLUMN adliye_prev TEXT");
     }
@@ -537,8 +537,8 @@ router.get('/archive', requireAuth, async (req, res) => {
       .orderBy('arsivlenme_tarihi', 'desc')
       .select('*');
 
-    res.render('archive', { 
-      tasks, 
+    res.render('archive', {
+      tasks,
       tebligatArsiv,
       username: req.session.username,
       role: req.session.userRole,
@@ -798,11 +798,11 @@ router.post('/upload-excel', requireAuth, upload.single('excelFile'), async (req
 router.get('/all-tasks', requireAuth, async (req, res) => {
   try {
     const { status, oncelik, adliye, muvekkil, creator, assignee } = req.query;
-    
+
     let query = db('tasks')
       .whereNot('status', 'arsiv')
       .orderBy('created_at', 'desc');
-    
+
     // Filtreler
     if (status) {
       query = query.where('status', status);
@@ -822,7 +822,7 @@ router.get('/all-tasks', requireAuth, async (req, res) => {
     if (assignee) {
       query = query.where('assignee_id', assignee);
     }
-    
+
     const allTasks = await query.select('tasks.*');
     const users = await db('users').select('id', 'username', 'role');
 
