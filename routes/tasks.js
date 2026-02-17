@@ -16,10 +16,22 @@ router.get('/dashboard', requireAuth, async (req, res) => {
   try {
     let tasks = [];
     let stats = {};
+    let sharedCreatorUsernames = [];
 
     if (role === 'atayan') {
+      const visibleCreatorIds = [userId];
+      if (req.session.username === 'tugberkoznacar') {
+        const sevvalUser = await db('users')
+          .where({ username: 'sevvalfidan' })
+          .first('id');
+        if (sevvalUser && sevvalUser.id) {
+          visibleCreatorIds.push(sevvalUser.id);
+          sharedCreatorUsernames.push('sevvalfidan');
+        }
+      }
+
       const myTasks = await db('tasks')
-        .where('creator_id', userId)
+        .whereIn('creator_id', visibleCreatorIds)
         .whereIn('status', ['tamamlanmadi', 'kontrol_ediliyor', 'kontrol_bekleniyor', 'yapiliyor', 'tamamlandi', 'tamamlanamıyor', 'iade'])
         .select('tasks.*');
 
@@ -191,6 +203,7 @@ router.get('/dashboard', requireAuth, async (req, res) => {
       username: req.session.username,
       userId: req.session.userId,
       historiesByTask,
+      sharedCreatorUsernames,
       active: activeSection
     });
   } catch (error) {

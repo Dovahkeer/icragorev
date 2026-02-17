@@ -296,6 +296,12 @@
                       <% if (role==='atanan' ) { %>Görevlerim<% } %>
             </h2>
 
+            <% if (role==='atayan' && typeof sharedCreatorUsernames !== 'undefined' && Array.isArray(sharedCreatorUsernames) && sharedCreatorUsernames.length) { %>
+              <div style="margin-bottom:0.75rem;padding:0.6rem 0.75rem;border:1px solid #bfd9ff;background:#eef5ff;border-radius:8px;color:#1d3f72;">
+                Bu listede kendi görevlerine ek olarak <strong><%= sharedCreatorUsernames.join(', ') %></strong> kullanıcısının görevleri de gösteriliyor. Sarı etiketli görevler bu kullanıcıya aittir.
+              </div>
+            <% } %>
+
             <% if (role==='atanan' ) { %>
               <div style="display:flex;gap:0.5rem;align-items:center;margin-bottom:0.75rem;">
                 <select id="filter-gorevler-status" onchange="filterTasks('gorevler')"
@@ -330,7 +336,12 @@
                               <%= task.islem_turu || 'Görev' %>
                             </h3>
                           </div>
-                          <div style="display: flex; gap: 0.5rem; align-items: center;">
+                          <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                            <% if (role==='atayan' && typeof sharedCreatorUsernames !== 'undefined' && Array.isArray(sharedCreatorUsernames) && sharedCreatorUsernames.length && task.creator_id !== userId) { %>
+                              <span style="background:#fff3cd;color:#856404;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.78em;font-weight:600;border:1px solid #ffc107;">
+                                <%= users.find(u => u.id === task.creator_id)?.username || 'Paylaşılan' %>
+                              </span>
+                            <% } %>
                             <span class="badge <%= task.oncelik === 'acil' ? 'badge-urgent' : 'badge-normal' %>">
                               <%= task.oncelik ? task.oncelik.toUpperCase() : 'RUTIN' %>
                             </span>
@@ -376,6 +387,12 @@
                                     <%= users.find(u => u.id === task.assignee_id)?.username || task.assignee_id %>
                                   </p>
                                   <% } %>
+                                <% if (role==='atayan' && typeof sharedCreatorUsernames !== 'undefined' && Array.isArray(sharedCreatorUsernames) && sharedCreatorUsernames.length && task.creator_id !== userId) { %>
+                                  <p style="color:#1d3f72;background:#eef5ff;padding:0.3rem 0.6rem;border-radius:6px;display:inline-block;font-size:0.92em;">
+                                    <strong>Oluşturan:</strong>
+                                    <%= users.find(u => u.id === task.creator_id)?.username || task.creator_id %>
+                                  </p>
+                                <% } %>
                                     <p><strong>Durum:</strong>
                                       <%= task.status || 'tamamlanmadi' %>
                                     </p>

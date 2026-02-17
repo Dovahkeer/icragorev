@@ -44,7 +44,7 @@ async function initDatabase() {
           table.string('icra_esas_no');
           table.string('islem_turu');
           table.text('islem_aciklamasi');
-          table.enum('oncelik', ['acil', 'rutin']).defaultTo('rutin');
+          table.enum('oncelik', ['acil', 'onemli', 'rutin']).defaultTo('rutin');
           table.enum('status', [
             'tamamlanmadi',
             'kontrol_ediliyor',
@@ -62,13 +62,14 @@ async function initDatabase() {
           table.integer('manager_id').unsigned().references('id').inTable('users');
           table.integer('last_status_by').unsigned().references('id').inTable('users');
           table.date('eklenme_tarihi');
+          table.date('son_gun').nullable();
+          table.string('adliye_prev');
           table.timestamps(true, true);
         });
         console.log('✓ tasks tablosu oluşturuldu');
       }
-    
-        // If the tasks table existed previously, ensure the 'yapiliyor' status
-        // is allowed by recreating the table with the new enum if needed.
+
+        // Migration: ensure 'onemli' oncelik and 'son_gun' column exist
         try {
           const masterRow = await db.raw("SELECT sql FROM sqlite_master WHERE type='table' AND name='tasks'");
           let createSql = '';
@@ -79,8 +80,11 @@ async function initDatabase() {
             createSql = masterRow.sql;
           }
 
-          if (createSql && !createSql.includes("yapiliyor")) {
-            console.log("i) tasks tablosu enum güncellemesi: 'yapiliyor' ekleniyor...");
+          const needsOnemli = createSql && !createSql.includes("onemli");
+          const needsSonGun = createSql && !createSql.includes("son_gun");
+
+          if (needsOnemli || needsSonGun) {
+            console.log("i) tasks tablosu güncelleniyor: 'onemli' ve/veya 'son_gun' ekleniyor...");
             await db.transaction(async (trx) => {
               await trx.schema.createTable('tasks_new', (table) => {
                 table.increments('id').primary();
@@ -93,7 +97,7 @@ async function initDatabase() {
                 table.string('icra_esas_no');
                 table.string('islem_turu');
                 table.text('islem_aciklamasi');
-                table.enum('oncelik', ['acil', 'rutin']).defaultTo('rutin');
+                table.enum('oncelik', ['acil', 'onemli', 'rutin']).defaultTo('rutin');
                 table.enum('status', [
                   'tamamlanmadi',
                   'kontrol_ediliyor',
@@ -111,19 +115,22 @@ async function initDatabase() {
                 table.integer('manager_id').unsigned().references('id').inTable('users');
                 table.integer('last_status_by').unsigned().references('id').inTable('users');
                 table.date('eklenme_tarihi');
+                table.date('son_gun').nullable();
+                table.string('adliye_prev');
                 table.timestamps(true, true);
               });
 
-              // copy data preserving column names
-              await trx.raw('INSERT INTO tasks_new (id, adliye, muvekkil, portfoy, borclu, borclu_tckn_vkn, icra_dairesi, icra_esas_no, islem_turu, islem_aciklamasi, oncelik, status, creator_id, assignee_id, manager_id, last_status_by, eklenme_tarihi, created_at, updated_at) SELECT id, adliye, muvekkil, portfoy, borclu, borclu_tckn_vkn, icra_dairesi, icra_esas_no, islem_turu, islem_aciklamasi, oncelik, status, creator_id, assignee_id, manager_id, last_status_by, eklenme_tarihi, created_at, updated_at FROM tasks');
+              // copy data - include adliye_prev and son_gun (NULL for existing rows)
+              await trx.raw(`INSERT INTO tasks_new (id, adliye, muvekkil, portfoy, borclu, borclu_tckn_vkn, icra_dairesi, icra_esas_no, islem_turu, islem_aciklamasi, oncelik, status, creator_id, assignee_id, manager_id, last_status_by, eklenme_tarihi, adliye_prev, created_at, updated_at)
+                SELECT id, adliye, muvekkil, portfoy, borclu, borclu_tckn_vkn, icra_dairesi, icra_esas_no, islem_turu, islem_aciklamasi, oncelik, status, creator_id, assignee_id, manager_id, last_status_by, eklenme_tarihi, adliye_prev, created_at, updated_at FROM tasks`);
 
               await trx.schema.dropTable('tasks');
               await trx.schema.renameTable('tasks_new', 'tasks');
             });
-            console.log("✓ tasks tablosu enum güncellendi: 'yapiliyor' eklendi");
+            console.log("✓ tasks tablosu güncellendi: 'onemli' ve 'son_gun' eklendi");
           }
         } catch (e) {
-          console.error('tasks enum güncelleme sırasında hata:', e);
+          console.error('tasks güncelleme sırasında hata:', e);
         }
     });
 
