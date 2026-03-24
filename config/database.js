@@ -29,6 +29,24 @@ async function initDatabase() {
         });
         console.log('✓ users tablosu oluşturuldu');
       }
+
+      const taskHistoryOptionalColumns = [
+        { name: 'updated_at', add: (table) => table.timestamp('updated_at').nullable() },
+        { name: 'attachment_path', add: (table) => table.text('attachment_path').nullable() },
+        { name: 'attachment_original_name', add: (table) => table.text('attachment_original_name').nullable() },
+        { name: 'attachment_mime_type', add: (table) => table.text('attachment_mime_type').nullable() },
+        { name: 'attachment_size', add: (table) => table.integer('attachment_size').nullable() }
+      ];
+
+      for (const column of taskHistoryOptionalColumns) {
+        const existsColumn = await db.schema.hasColumn('task_history', column.name);
+        if (!existsColumn) {
+          await db.schema.table('task_history', (table) => {
+            column.add(table);
+          });
+          console.log(`âœ“ task_history tablosuna ${column.name} eklendi`);
+        }
+      }
     });
 
     await db.schema.hasTable('tasks').then(async (exists) => {
@@ -55,7 +73,8 @@ async function initDatabase() {
             'kontrol_bekleniyor',
             'uygun',
             'son_onay_bekliyor',
-            'arsiv'
+            'arsiv',
+            'teyitlenmedi'
           ]).defaultTo('tamamlanmadi');
           table.integer('creator_id').unsigned().references('id').inTable('users');
           table.integer('assignee_id').unsigned().references('id').inTable('users');
@@ -69,7 +88,7 @@ async function initDatabase() {
         console.log('✓ tasks tablosu oluşturuldu');
       }
 
-        // Migration: ensure 'onemli' oncelik and 'son_gun' column exist
+        // Migration: ensure 'onemli' oncelik, 'son_gun' column and 'teyitlenmedi' status exist
         try {
           const masterRow = await db.raw("SELECT sql FROM sqlite_master WHERE type='table' AND name='tasks'");
           let createSql = '';
@@ -82,9 +101,10 @@ async function initDatabase() {
 
           const needsOnemli = createSql && !createSql.includes("onemli");
           const needsSonGun = createSql && !createSql.includes("son_gun");
+          const needsTeyitlenmedi = createSql && !createSql.includes("teyitlenmedi");
 
-          if (needsOnemli || needsSonGun) {
-            console.log("i) tasks tablosu güncelleniyor: 'onemli' ve/veya 'son_gun' ekleniyor...");
+          if (needsOnemli || needsSonGun || needsTeyitlenmedi) {
+            console.log("i) tasks tablosu güncelleniyor: 'onemli', 'son_gun' ve/veya 'teyitlenmedi' ekleniyor...");
             await db.transaction(async (trx) => {
               await trx.schema.createTable('tasks_new', (table) => {
                 table.increments('id').primary();
@@ -108,7 +128,8 @@ async function initDatabase() {
                   'kontrol_bekleniyor',
                   'uygun',
                   'son_onay_bekliyor',
-                  'arsiv'
+                  'arsiv',
+                  'teyitlenmedi'
                 ]).defaultTo('tamamlanmadi');
                 table.integer('creator_id').unsigned().references('id').inTable('users');
                 table.integer('assignee_id').unsigned().references('id').inTable('users');
@@ -127,7 +148,7 @@ async function initDatabase() {
               await trx.schema.dropTable('tasks');
               await trx.schema.renameTable('tasks_new', 'tasks');
             });
-            console.log("✓ tasks tablosu güncellendi: 'onemli' ve 'son_gun' eklendi");
+            console.log("✓ tasks tablosu güncellendi: 'onemli', 'son_gun' ve 'teyitlenmedi' eklendi");
           }
         } catch (e) {
           console.error('tasks güncelleme sırasında hata:', e);
@@ -143,6 +164,11 @@ async function initDatabase() {
           table.string('action').notNullable();
           table.text('details');
           table.timestamp('created_at').defaultTo(db.fn.now());
+          table.timestamp('updated_at').nullable();
+          table.text('attachment_path').nullable();
+          table.text('attachment_original_name').nullable();
+          table.text('attachment_mime_type').nullable();
+          table.integer('attachment_size').nullable();
         });
         console.log('✓ task_history tablosu oluşturuldu');
       }
@@ -265,7 +291,7 @@ async function initDatabase() {
     try {
       const passwordFaktoring = await bcrypt.hash('faktoring', 10);
 
-      const usersToEnsure = ['tugberkoznacar', 'ridvanyucel', 'sevvalfidan'];
+      const usersToEnsure = ['tugberkoznacar', 'ridvanyucel', 'sevvalfidan', 'serenafaktoring'];
       for (const uname of usersToEnsure) {
         const u = await db('users').where({ username: uname }).first();
         if (!u) {
@@ -277,6 +303,32 @@ async function initDatabase() {
       }
     } catch (e) {
       console.error('Ek kullanıcı ekleme sırasında hata:', e);
+    }
+
+    // Ensure habibyalin exists with password 'akbank'
+    try {
+      const passwordAkbank = await bcrypt.hash('akbank', 10);
+      const habib = await db('users').where({ username: 'habibyalin' }).first();
+
+      if (!habib) {
+        await db('users').insert({ username: 'habibyalin', password_hash: passwordAkbank, role: 'atayan' });
+        console.log("✓ 'habibyalin' kullanıcısı eklendi (şifre: akbank)");
+      } else {
+        const isPasswordAkbank = await bcrypt.compare('akbank', habib.password_hash);
+        const updateData = {};
+
+        if (!isPasswordAkbank) updateData.password_hash = passwordAkbank;
+        if (habib.role !== 'atayan') updateData.role = 'atayan';
+
+        if (Object.keys(updateData).length > 0) {
+          await db('users').where({ id: habib.id }).update(updateData);
+          console.log("✓ 'habibyalin' kullanıcısı güncellendi (rol: atayan, şifre: akbank)");
+        } else {
+          console.log("✓ 'habibyalin' kullanıcısı zaten mevcut");
+        }
+      }
+    } catch (e) {
+      console.error('habibyalin kullanıcısı ekleme/güncelleme sırasında hata:', e);
     }
 
     console.log('✓ Veritabanı hazır!');
@@ -291,3 +343,4 @@ if (require.main === module) {
 }
 
 module.exports = { db, initDatabase };
+

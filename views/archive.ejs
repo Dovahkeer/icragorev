@@ -238,7 +238,11 @@
                       <%= task.borclu_tckn_vkn || '-' %>
                     </td>
                     <td>
-                      <span class="status-badge status-arsiv">✅ ARŞİV</span>
+                      <% if (task.status === 'teyitlenmedi') { %>
+                        <span class="status-badge status-iade">TEYITLENMEDI</span>
+                      <% } else { %>
+                        <span class="status-badge status-arsiv">ARSIV</span>
+                      <% } %>
                     </td>
                     <td>
                       <%= task.eklenme_tarihi || '-' %>
@@ -270,6 +274,13 @@
       </div>
     </main>
   </div>
+  <script>
+    window.__scrollLockConfig = {
+      storageKey: 'scroll-lock:/archive',
+      formSelector: 'form.scroll-form'
+    };
+  </script>
+  <script src="/scroll-lock.js"></script>
 </body>
 
 </html>

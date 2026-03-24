@@ -10,6 +10,32 @@
 </head>
 
 <body>
+  <%
+    const currentUserId = Number(userId);
+    const managerOwnCreatedViewOnlySafe =
+      typeof managerOwnCreatedViewOnly !== 'undefined'
+        ? managerOwnCreatedViewOnly
+        : (role === 'yonetici' && currentUserId === 4);
+    const managerOwnCreatedTasksFallback = managerOwnCreatedViewOnlySafe
+      ? [
+          ...((tasks && tasks.toDistribute) || []),
+          ...((tasks && tasks.forControl) || []),
+          ...((tasks && tasks.myAssignedTasks) || [])
+        ].filter((task, index, arr) =>
+          task && Number(task.creator_id) === currentUserId && arr.findIndex((item) => item && item.id === task.id) === index
+        )
+      : [];
+    const getNoteAttachmentHref = (note) => {
+      if (!note || !note.attachment_path) return '';
+      return '/' + String(note.attachment_path).replace(/^\/+/, '').replace(/\\/g, '/');
+    };
+    const isImageNoteAttachment = (note) => note && ['image/jpeg', 'image/png'].includes(note.attachment_mime_type);
+    const hasPdfNoteAttachment = (note) => note && note.attachment_mime_type === 'application/pdf';
+    const getNoteAttachmentLabel = (note) => {
+      if (!note || !note.attachment_path) return '';
+      return note.attachment_original_name || (hasPdfNoteAttachment(note) ? 'PDF eki' : 'Dosya eki');
+    };
+  %>
   <div class="app-container">
     <aside class="sidebar">
       <div class="sidebar-header">
@@ -66,7 +92,13 @@
                     <span>Adliye Listesi</span>
                   </a>
                   <% } %>
-                    <!-- Tebligatlar, Tüm Görevler ve Arşiv en alta taşındı -->
+                    <% if (role!=='yonetici' ) { %>
+                      <a href="#" class="menu-item" onclick="showSection('adliye-listesi')">
+                        <span class="menu-item-icon">🏛️</span>
+                        <span>Adliye Listesi</span>
+                      </a>
+                    <% } %>
+                     <!-- Tebligatlar, Tüm Görevler ve Arşiv en alta taşındı -->
                     <a href="/tebligatlar" class="menu-item">
                       <span class="menu-item-icon">📝</span>
                       <span>Tebligatlar</span>
@@ -187,9 +219,9 @@
                   <div class="stat-icon blue">📊</div>
                   <div class="stat-info">
                     <h3>
-                      <%= stats.total || 0 %>
+                      <%= managerOwnCreatedViewOnlySafe ? (stats.createdByMe || managerOwnCreatedTasksFallback.length || 0) : (stats.total || 0) %>
                     </h3>
-                    <p>Toplam Görev</p>
+                    <p><%= managerOwnCreatedViewOnlySafe ? 'Oluşturduğum Görev' : 'Toplam Görev' %></p>
                   </div>
                 </div>
                 <div class="stat-card">
@@ -292,13 +324,13 @@
           <section id="gorevler" class="section active">
             <h2>
               <% if (role==='atayan' ) { %>Oluşturduğum Görevler<% } %>
-                  <% if (role==='yonetici' ) { %>Tüm Görevler<% } %>
+                  <% if (role==='yonetici' ) { %><%= managerOwnCreatedViewOnlySafe ? 'Oluşturduğum Görevler' : 'Tüm Görevler' %><% } %>
                       <% if (role==='atanan' ) { %>Görevlerim<% } %>
             </h2>
 
             <% if (role==='atayan' && typeof sharedCreatorUsernames !== 'undefined' && Array.isArray(sharedCreatorUsernames) && sharedCreatorUsernames.length) { %>
               <div style="margin-bottom:0.75rem;padding:0.6rem 0.75rem;border:1px solid #bfd9ff;background:#eef5ff;border-radius:8px;color:#1d3f72;">
-                Bu listede kendi görevlerine ek olarak <strong><%= sharedCreatorUsernames.join(', ') %></strong> kullanıcısının görevleri de gösteriliyor. Sarı etiketli görevler bu kullanıcıya aittir.
+                Bu listede kendi görevlerine ek olarak <strong><%= sharedCreatorUsernames.join(', ') %></strong> kullanıcılarının görevleri de gösteriliyor. Sarı etiketli görevler bu kullanıcılara aittir.
               </div>
             <% } %>
 
@@ -323,6 +355,7 @@
               <% } %>
 
                 <% let displayTasks=[]; if (role==='atayan' && tasks.myTasks) { displayTasks=tasks.myTasks; } else if
+                  (role==='yonetici' && managerOwnCreatedViewOnlySafe) { displayTasks=(tasks.myCreatedTasks && tasks.myCreatedTasks.length ? tasks.myCreatedTasks : managerOwnCreatedTasksFallback); } else if
                   (role==='yonetici' && tasks.toDistribute) { displayTasks=[...tasks.toDistribute, ...(tasks.forControl
                   || [])]; } else if (role==='atanan' && Array.isArray(tasks)) { displayTasks=tasks; } %>
 
@@ -426,14 +459,31 @@
                                                     <div class="note-body">
                                                       <%= h.details %>
                                                     </div>
+                                                    <% if (h.attachment_path) { %>
+                                                      <div class="note-attachment">
+                                                        <% if (isImageNoteAttachment(h)) { %>
+                                                          <a href="<%= getNoteAttachmentHref(h) %>" target="_blank" rel="noopener">
+                                                            <img src="<%= getNoteAttachmentHref(h) %>" alt="<%= getNoteAttachmentLabel(h) %>" class="note-attachment-image">
+                                                          </a>
+                                                        <% } else { %>
+                                                          <a href="<%= getNoteAttachmentHref(h) %>" target="_blank" rel="noopener" class="note-attachment-link">
+                                                            📎 <%= getNoteAttachmentLabel(h) %>
+                                                          </a>
+                                                        <% } %>
+                                                      </div>
+                                                    <% } %>
                                                   </div>
                                                   <% }); %>
                                                     <% } %>
                                             </div>
                                             <form method="POST" action="/tasks/<%= task.id %>/note"
-                                              class="note-form scroll-form">
+                                              class="note-form scroll-form" enctype="multipart/form-data">
                                               <input type="hidden" name="returnTo" value="gorevler">
-                                              <textarea name="note" placeholder="Not ekleyin..." required></textarea>
+                                              <textarea name="note" placeholder="Not ekleyin..."></textarea>
+                                              <div class="note-upload-row">
+                                                <input type="file" name="attachment" accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf" class="note-upload-input">
+                                                <small class="note-upload-hint">JPEG, PNG veya PDF ekleyebilirsiniz.</small>
+                                              </div>
                                               <button type="submit" class="btn btn-primary"
                                                 style="margin-top:0.5rem;">Ekle</button>
                                             </form>
@@ -479,14 +529,31 @@
                                                         <div class="note-body">
                                                           <%= h.details %>
                                                         </div>
+                                                        <% if (h.attachment_path) { %>
+                                                          <div class="note-attachment">
+                                                            <% if (isImageNoteAttachment(h)) { %>
+                                                              <a href="<%= getNoteAttachmentHref(h) %>" target="_blank" rel="noopener">
+                                                                <img src="<%= getNoteAttachmentHref(h) %>" alt="<%= getNoteAttachmentLabel(h) %>" class="note-attachment-image">
+                                                              </a>
+                                                            <% } else { %>
+                                                              <a href="<%= getNoteAttachmentHref(h) %>" target="_blank" rel="noopener" class="note-attachment-link">
+                                                                📎 <%= getNoteAttachmentLabel(h) %>
+                                                              </a>
+                                                            <% } %>
+                                                          </div>
+                                                        <% } %>
                                                       </div>
                                                       <% }); %>
                                                         <% } %>
                                                 </div>
                                                 <form method="POST" action="/tasks/<%= task.id %>/note"
-                                                  class="note-form scroll-form">
+                                                  class="note-form scroll-form" enctype="multipart/form-data">
                                                   <input type="hidden" name="returnTo" value="gorevler">
-                                                  <textarea name="note" placeholder="Not ekleyin..." required></textarea>
+                                                  <textarea name="note" placeholder="Not ekleyin..."></textarea>
+                                                  <div class="note-upload-row">
+                                                    <input type="file" name="attachment" accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf" class="note-upload-input">
+                                                    <small class="note-upload-hint">JPEG, PNG veya PDF ekleyebilirsiniz.</small>
+                                                  </div>
                                                   <button type="submit" class="btn btn-primary"
                                                     style="margin-top:0.5rem;">Ekle</button>
                                                 </form>
@@ -502,8 +569,8 @@
                           <% } %>
           </section>
 
-          <% if (role==='yonetici' || role==='atayan' ) { %>
-            <!-- Adliye Listesi (Yöneticiler ve Atayanlar görebilir) -->
+          <% if (Array.isArray(adliyeler)) { %>
+            <!-- Adliye Listesi -->
             <section id="adliye-listesi" class="section">
               <h2>Adliye Listesi</h2>
               <div class="adliye-container">
@@ -528,9 +595,14 @@
                         <h3>
                           <%= a %>
                         </h3>
-                        <button type="button" onclick="copyTable('tbl-<%= safeA %>');" class="copy-btn">
-                          📋 Tabloyu Kopyala
-                        </button>
+                        <div class="adliye-actions">
+                          <button type="button" onclick="copyTable('tbl-<%= safeA %>');" class="copy-btn">
+                            📋 Tabloyu Kopyala
+                          </button>
+                          <a href="/adliye-list/export?adliye=<%= encodeURIComponent(a) %>" class="copy-btn export-btn">
+                            📥 Excel İndir
+                          </a>
+                        </div>
                       </div>
                       <div class="modern-table-wrapper">
                         <table id="tbl-<%= safeA %>" class="modern-table">
@@ -544,38 +616,135 @@
                               <th>Portföy</th>
                               <th>Borçlu</th>
                               <th>Durum</th>
+                              <th>Son Not</th>
                               <% if (role==='yonetici' ) { %>
-                                <th>Ofis Aktar</th>
+                                <th data-export="false">Ofis Aktar</th>
                                 <% } %>
                             </tr>
                           </thead>
                           <tbody>
                             <% (tasksByAdliye[a] || []).forEach(function(t){ %>
+                              <% 
+                                const adliyeNotes = ((historiesByTask && historiesByTask[t.id]) || []).filter(h => h.action === 'note');
+                                const latestAdliyeNote = adliyeNotes[0] || null;
+                                const latestAdliyeNoteText = latestAdliyeNote ? (latestAdliyeNote.details || '') : '';
+                                const latestAdliyeNotePreview = latestAdliyeNote
+                                  ? (latestAdliyeNoteText || getNoteAttachmentLabel(latestAdliyeNote))
+                                  : '';
+                              %>
                               <tr>
-                                <td><span class="id-badge">#<%= t.id %></span></td>
-                                <td><strong>
+                                <td data-export-value="<%= t.id %>"><span class="id-badge">#<%= t.id %></span></td>
+                                <td data-export-value="<%= t.islem_turu || '' %>"><strong>
                                     <%= t.islem_turu %>
                                   </strong></td>
-                                <td>
+                                <td data-export-value="<%= t.icra_dairesi || '' %>">
                                   <%= t.icra_dairesi || '-' %>
                                 </td>
-                                <td><strong style="color: #667eea;">
+                                <td data-export-value="<%= t.icra_esas_no || '' %>"><strong style="color: #667eea;">
                                     <%= t.icra_esas_no || '-' %>
                                   </strong></td>
-                                <td>
+                                <td data-export-value="<%= t.muvekkil || '' %>">
                                   <%= t.muvekkil %>
                                 </td>
-                                <td>
+                                <td data-export-value="<%= t.portfoy || '' %>">
                                   <%= t.portfoy %>
                                 </td>
-                                <td>
+                                <td data-export-value="<%= t.borclu || '' %>">
                                   <%= t.borclu || '-' %>
                                 </td>
-                                <td><span class="status-badge status-<%= t.status %>">
+                                <td data-export-value="<%= t.status || '' %>"><span class="status-badge status-<%= t.status %>">
                                     <%= t.status %>
                                   </span></td>
+                                <td data-export-value="<%= latestAdliyeNotePreview %>" class="adliye-note-cell">
+                                  <div class="note-controls adliye-note-controls">
+                                    <button type="button" class="btn btn-note"
+                                      onclick="toggleNotes('<%= t.id %>','adliye')">📝 Notlar (<%= adliyeNotes.length %>)</button>
+                                  </div>
+                                  <% if (latestAdliyeNotePreview) { %>
+                                    <div class="adliye-note-preview">
+                                      <%= latestAdliyeNotePreview.length > 80 ? latestAdliyeNotePreview.slice(0, 80) + '...' : latestAdliyeNotePreview %>
+                                    </div>
+                                  <% } else { %>
+                                    <div class="adliye-note-preview empty">Henüz not yok</div>
+                                  <% } %>
+
+                                  <div class="note-panel" id="notes-adliye-<%= t.id %>" style="display:none; margin-top:0.5rem;">
+                                    <div class="notes-list">
+                                      <% if (adliyeNotes.length) { %>
+                                        <% adliyeNotes.forEach(function(h){ const canEditNote = Number(h.user_id) === currentUserId || role === 'yonetici' || role === 'atayan'; %>
+                                          <div class="note-item">
+                                            <div class="note-meta">
+                                              <strong><%= users.find(function(u){ return u.id === h.user_id; })?.username || 'Anonim' %></strong>
+                                              ·
+                                              <small><%= new Date(h.created_at).toLocaleString('tr-TR') %></small>
+                                              <% if (canEditNote) { %>
+                                                <button type="button" class="btn btn-note btn-note-edit"
+                                                  onclick="toggleNoteEdit('<%= h.id %>')">Düzenle</button>
+                                              <% } %>
+                                            </div>
+                                            <div class="note-body"><%= h.details %></div>
+                                            <% if (h.attachment_path) { %>
+                                              <div class="note-attachment">
+                                                <% if (isImageNoteAttachment(h)) { %>
+                                                  <a href="<%= getNoteAttachmentHref(h) %>" target="_blank" rel="noopener">
+                                                    <img src="<%= getNoteAttachmentHref(h) %>" alt="<%= getNoteAttachmentLabel(h) %>" class="note-attachment-image">
+                                                  </a>
+                                                <% } else { %>
+                                                  <a href="<%= getNoteAttachmentHref(h) %>" target="_blank" rel="noopener" class="note-attachment-link">
+                                                    📎 <%= getNoteAttachmentLabel(h) %>
+                                                  </a>
+                                                <% } %>
+                                              </div>
+                                            <% } %>
+                                            <% if (canEditNote) { %>
+                                              <form method="POST" action="/tasks/<%= t.id %>/notes/<%= h.id %>/edit"
+                                                class="note-form scroll-form" id="note-edit-<%= h.id %>"
+                                                enctype="multipart/form-data"
+                                                style="display:none; margin-top:0.5rem;">
+                                                <input type="hidden" name="returnTo" value="adliye-listesi">
+                                                <textarea name="note"><%= h.details %></textarea>
+                                                <% if (h.attachment_path) { %>
+                                                  <div class="note-current-attachment">
+                                                    <a href="<%= getNoteAttachmentHref(h) %>" target="_blank" rel="noopener" class="note-attachment-link">
+                                                      Mevcut ek: <%= getNoteAttachmentLabel(h) %>
+                                                    </a>
+                                                    <label class="note-attachment-toggle">
+                                                      <input type="checkbox" name="remove_attachment" value="1">
+                                                      Eki kaldır
+                                                    </label>
+                                                  </div>
+                                                <% } %>
+                                                <div class="note-upload-row">
+                                                  <input type="file" name="attachment" accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf" class="note-upload-input">
+                                                  <small class="note-upload-hint">JPEG, PNG veya PDF ekleyin. Yeni dosya mevcut eki değiştirir.</small>
+                                                </div>
+                                                <div class="note-action-row">
+                                                  <button type="submit" class="btn btn-primary">Kaydet</button>
+                                                  <button type="button" class="btn btn-secondary"
+                                                    onclick="toggleNoteEdit('<%= h.id %>')">Vazgeç</button>
+                                                </div>
+                                              </form>
+                                            <% } %>
+                                          </div>
+                                        <% }); %>
+                                      <% } else { %>
+                                        <div class="note-empty">Henüz not eklenmemiş.</div>
+                                      <% } %>
+                                    </div>
+
+                                    <form method="POST" action="/tasks/<%= t.id %>/note" class="note-form scroll-form" enctype="multipart/form-data">
+                                      <input type="hidden" name="returnTo" value="adliye-listesi">
+                                      <textarea name="note" placeholder="Adliye listesi notu ekleyin..."></textarea>
+                                      <div class="note-upload-row">
+                                        <input type="file" name="attachment" accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf" class="note-upload-input">
+                                        <small class="note-upload-hint">JPEG, PNG veya PDF ekleyebilirsiniz.</small>
+                                      </div>
+                                      <button type="submit" class="btn btn-primary" style="margin-top:0.5rem;">Not Ekle</button>
+                                    </form>
+                                  </div>
+                                </td>
                                 <% if (role==='yonetici' ) { %>
-                                  <td>
+                                  <td data-export="false">
                                     <% if (a !=='Ofis' ) { %>
                                       <form method="POST" action="/tasks/<%= t.id %>/move-to-office" class="scroll-form"
                                         style="margin:0;">
@@ -628,6 +797,7 @@
                       <option value="Birikim">Birikim</option>
                       <option value="Emir">Emir</option>
                       <option value="Birleşim">Birleşim</option>
+                      <option value="AKBANK">AKBANK</option>
                       <option value="GSD Faktoring">GSD Faktoring</option>
                       <option value="ULUSAL Faktoring">Ulusal Faktoring</option>
                       <option value="OPTİMA Faktoring">Optima Faktoring</option>
@@ -657,7 +827,9 @@
                       <option value="Şeker">Şeker</option>
                       <option value="Garantibank">Garantibank</option>
                       <option value="Garanti Faktöring">Garanti Faktöring</option>
+                      <option value="AKBANK">AKBANK</option>
                       <option value="İNG">İNG</option>
+                      <option value="İNG">Denizbank</option>
 
                     </select>
 
@@ -808,14 +980,31 @@
                                               <div class="note-body">
                                                 <%= h.details %>
                                               </div>
+                                              <% if (h.attachment_path) { %>
+                                                <div class="note-attachment">
+                                                  <% if (isImageNoteAttachment(h)) { %>
+                                                    <a href="<%= getNoteAttachmentHref(h) %>" target="_blank" rel="noopener">
+                                                      <img src="<%= getNoteAttachmentHref(h) %>" alt="<%= getNoteAttachmentLabel(h) %>" class="note-attachment-image">
+                                                    </a>
+                                                  <% } else { %>
+                                                    <a href="<%= getNoteAttachmentHref(h) %>" target="_blank" rel="noopener" class="note-attachment-link">
+                                                      📎 <%= getNoteAttachmentLabel(h) %>
+                                                    </a>
+                                                  <% } %>
+                                                </div>
+                                              <% } %>
                                             </div>
                                             <% }); %>
                                               <% } %>
                                       </div>
                                       <form method="POST" action="/tasks/<%= task.id %>/note"
-                                        class="note-form scroll-form">
+                                        class="note-form scroll-form" enctype="multipart/form-data">
                                         <input type="hidden" name="returnTo" value="onay-bekleyen">
-                                        <textarea name="note" placeholder="Not ekleyin..." required></textarea>
+                                        <textarea name="note" placeholder="Not ekleyin..."></textarea>
+                                        <div class="note-upload-row">
+                                          <input type="file" name="attachment" accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf" class="note-upload-input">
+                                          <small class="note-upload-hint">JPEG, PNG veya PDF ekleyebilirsiniz.</small>
+                                        </div>
                                         <button type="submit" class="btn btn-primary"
                                           style="margin-top:0.5rem;">Ekle</button>
                                       </form>
@@ -929,14 +1118,31 @@
                                               <div class="note-body">
                                                 <%= h.details %>
                                               </div>
+                                              <% if (h.attachment_path) { %>
+                                                <div class="note-attachment">
+                                                  <% if (isImageNoteAttachment(h)) { %>
+                                                    <a href="<%= getNoteAttachmentHref(h) %>" target="_blank" rel="noopener">
+                                                      <img src="<%= getNoteAttachmentHref(h) %>" alt="<%= getNoteAttachmentLabel(h) %>" class="note-attachment-image">
+                                                    </a>
+                                                  <% } else { %>
+                                                    <a href="<%= getNoteAttachmentHref(h) %>" target="_blank" rel="noopener" class="note-attachment-link">
+                                                      📎 <%= getNoteAttachmentLabel(h) %>
+                                                    </a>
+                                                  <% } %>
+                                                </div>
+                                              <% } %>
                                             </div>
                                             <% }); %>
                                               <% } %>
                                       </div>
                                       <form method="POST" action="/tasks/<%= task.id %>/note"
-                                        class="note-form scroll-form">
+                                        class="note-form scroll-form" enctype="multipart/form-data">
                                         <input type="hidden" name="returnTo" value="bana-atanan">
-                                        <textarea name="note" placeholder="Not ekleyin..." required></textarea>
+                                        <textarea name="note" placeholder="Not ekleyin..."></textarea>
+                                        <div class="note-upload-row">
+                                          <input type="file" name="attachment" accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf" class="note-upload-input">
+                                          <small class="note-upload-hint">JPEG, PNG veya PDF ekleyebilirsiniz.</small>
+                                        </div>
                                         <button type="submit" class="btn btn-primary"
                                           style="margin-top:0.5rem;">Ekle</button>
                                       </form>
@@ -1011,8 +1217,8 @@
                                       <input type="hidden" name="returnTo" value="atama">
                                       <select name="assignee_id" required>
                                         <option value="">Atanan Seç</option>
-                                        <% users.filter(u=> u.role === 'atanan' || u.role ===
-                                          'yonetici').forEach(function(user){ %>
+                                        <% users.filter(u=> (u.role === 'atanan' || u.role ===
+                                          'yonetici') && !['ozgeaslan', 'cansubozbek', 'humeyra'].includes(u.username)).forEach(function(user){ %>
                                           <% const stat=(userStats || []).find(function(s){ return s.id===user.id; });
                                             %>
                                             <option value="<%= user.id %>">
@@ -1045,14 +1251,31 @@
                                               <div class="note-body">
                                                 <%= h.details %>
                                               </div>
+                                              <% if (h.attachment_path) { %>
+                                                <div class="note-attachment">
+                                                  <% if (isImageNoteAttachment(h)) { %>
+                                                    <a href="<%= getNoteAttachmentHref(h) %>" target="_blank" rel="noopener">
+                                                      <img src="<%= getNoteAttachmentHref(h) %>" alt="<%= getNoteAttachmentLabel(h) %>" class="note-attachment-image">
+                                                    </a>
+                                                  <% } else { %>
+                                                    <a href="<%= getNoteAttachmentHref(h) %>" target="_blank" rel="noopener" class="note-attachment-link">
+                                                      📎 <%= getNoteAttachmentLabel(h) %>
+                                                    </a>
+                                                  <% } %>
+                                                </div>
+                                              <% } %>
                                             </div>
                                             <% }); %>
                                               <% } %>
                                       </div>
                                       <form method="POST" action="/tasks/<%= task.id %>/note"
-                                        class="note-form scroll-form">
+                                        class="note-form scroll-form" enctype="multipart/form-data">
                                         <input type="hidden" name="returnTo" value="atama">
-                                        <textarea name="note" placeholder="Not ekleyin..." required></textarea>
+                                        <textarea name="note" placeholder="Not ekleyin..."></textarea>
+                                        <div class="note-upload-row">
+                                          <input type="file" name="attachment" accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf" class="note-upload-input">
+                                          <small class="note-upload-hint">JPEG, PNG veya PDF ekleyebilirsiniz.</small>
+                                        </div>
                                         <button type="submit" class="btn btn-primary"
                                           style="margin-top:0.5rem;">Ekle</button>
                                       </form>
@@ -1165,14 +1388,31 @@
                                               <div class="note-body">
                                                 <%= h.details %>
                                               </div>
+                                              <% if (h.attachment_path) { %>
+                                                <div class="note-attachment">
+                                                  <% if (isImageNoteAttachment(h)) { %>
+                                                    <a href="<%= getNoteAttachmentHref(h) %>" target="_blank" rel="noopener">
+                                                      <img src="<%= getNoteAttachmentHref(h) %>" alt="<%= getNoteAttachmentLabel(h) %>" class="note-attachment-image">
+                                                    </a>
+                                                  <% } else { %>
+                                                    <a href="<%= getNoteAttachmentHref(h) %>" target="_blank" rel="noopener" class="note-attachment-link">
+                                                      📎 <%= getNoteAttachmentLabel(h) %>
+                                                    </a>
+                                                  <% } %>
+                                                </div>
+                                              <% } %>
                                             </div>
                                             <% }); %>
                                               <% } %>
                                       </div>
                                       <form method="POST" action="/tasks/<%= task.id %>/note"
-                                        class="note-form scroll-form">
+                                        class="note-form scroll-form" enctype="multipart/form-data">
                                         <input type="hidden" name="returnTo" value="kontrol">
-                                        <textarea name="note" placeholder="Not ekleyin..." required></textarea>
+                                        <textarea name="note" placeholder="Not ekleyin..."></textarea>
+                                        <div class="note-upload-row">
+                                          <input type="file" name="attachment" accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf" class="note-upload-input">
+                                          <small class="note-upload-hint">JPEG, PNG veya PDF ekleyebilirsiniz.</small>
+                                        </div>
                                         <button type="submit" class="btn btn-primary"
                                           style="margin-top:0.5rem;">Ekle</button>
                                       </form>
@@ -1265,14 +1505,31 @@
                                               <div class="note-body">
                                                 <%= h.details %>
                                               </div>
+                                              <% if (h.attachment_path) { %>
+                                                <div class="note-attachment">
+                                                  <% if (isImageNoteAttachment(h)) { %>
+                                                    <a href="<%= getNoteAttachmentHref(h) %>" target="_blank" rel="noopener">
+                                                      <img src="<%= getNoteAttachmentHref(h) %>" alt="<%= getNoteAttachmentLabel(h) %>" class="note-attachment-image">
+                                                    </a>
+                                                  <% } else { %>
+                                                    <a href="<%= getNoteAttachmentHref(h) %>" target="_blank" rel="noopener" class="note-attachment-link">
+                                                      📎 <%= getNoteAttachmentLabel(h) %>
+                                                    </a>
+                                                  <% } %>
+                                                </div>
+                                              <% } %>
                                             </div>
                                             <% }); %>
                                               <% } %>
                                       </div>
                                       <form method="POST" action="/tasks/<%= task.id %>/note"
-                                        class="note-form scroll-form">
+                                        class="note-form scroll-form" enctype="multipart/form-data">
                                         <input type="hidden" name="returnTo" value="yonetici-onay">
-                                        <textarea name="note" placeholder="Not ekleyin..." required></textarea>
+                                        <textarea name="note" placeholder="Not ekleyin..."></textarea>
+                                        <div class="note-upload-row">
+                                          <input type="file" name="attachment" accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf" class="note-upload-input">
+                                          <small class="note-upload-hint">JPEG, PNG veya PDF ekleyebilirsiniz.</small>
+                                        </div>
                                         <button type="submit" class="btn btn-primary"
                                           style="margin-top:0.5rem;">Ekle</button>
                                       </form>
@@ -1347,23 +1604,101 @@
       try {
         const el = document.getElementById('adliye-' + safeA);
         if (el) el.style.display = 'block';
+        const matchingButton = Array.from(document.querySelectorAll('.adliye-btn')).find((button) => {
+          return (button.getAttribute('onclick') || '').includes("'" + safeA + "'");
+        });
+        if (matchingButton) matchingButton.classList.add('active');
         if (typeof event !== 'undefined' && event && event.target) {
           const btn = event.target.closest('.adliye-btn');
           if (btn) btn.classList.add('active');
         }
+        sessionStorage.setItem('dashboard:selectedAdliye', safeA);
       } catch (e) { }
     }
-    function copyTable(id) {
+    function restoreActiveAdliye() {
       try {
-        const tbl = document.getElementById(id);
-        if (!tbl) return alert('Tablo bulunamadı');
-        let text = '';
-        for (let r of tbl.rows) {
-          const cells = Array.from(r.cells).map(c => c.innerText.trim().replace(/\t/g, ' '));
-          text += cells.join('\t') + '\n';
+        const savedAdliye = sessionStorage.getItem('dashboard:selectedAdliye');
+        if (savedAdliye && document.getElementById('adliye-' + savedAdliye)) {
+          showAdliye(savedAdliye);
         }
-        navigator.clipboard.writeText(text).then(() => alert('Tablo kopyalandı'));
-      } catch (e) { alert('Kopyalama desteklenmiyor: ' + e.message); }
+      } catch (e) { }
+    }
+    function toggleNoteEdit(noteId) {
+      const form = document.getElementById('note-edit-' + noteId);
+      if (!form) return;
+      form.style.display = (form.style.display === 'none' || form.style.display === '') ? 'block' : 'none';
+    }
+    function getTableExportData(tableId) {
+      const table = document.getElementById(tableId);
+      if (!table) return null;
+
+      const headerCells = Array.from(table.querySelectorAll('thead th'));
+      const exportableColumns = headerCells
+        .map((headerCell, index) => ({
+          index,
+          label: headerCell.innerText.trim()
+        }))
+        .filter(({ index }) => headerCells[index].getAttribute('data-export') !== 'false');
+
+      const rows = Array.from(table.querySelectorAll('tbody tr')).map((row) => {
+        return exportableColumns.map(({ index }) => {
+          const cell = row.cells[index];
+          if (!cell) return '';
+
+          const explicitValue = cell.getAttribute('data-export-value');
+          const rawValue = explicitValue !== null ? explicitValue : cell.innerText;
+          return String(rawValue || '')
+            .replace(/\s+/g, ' ')
+            .replace(/\t/g, ' ')
+            .trim();
+        });
+      });
+
+      return {
+        headers: exportableColumns.map((column) => column.label),
+        rows
+      };
+    }
+    function fallbackCopyText(text) {
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.setAttribute('readonly', 'readonly');
+      textarea.style.position = 'fixed';
+      textarea.style.left = '-9999px';
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+    }
+    async function copyTable(id) {
+      try {
+        const exportData = getTableExportData(id);
+        if (!exportData) return alert('Tablo bulunamadı');
+
+        const text = [exportData.headers, ...exportData.rows]
+          .map((row) => row.join('\t'))
+          .join('\n');
+
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(text);
+        } else {
+          fallbackCopyText(text);
+        }
+
+        alert('Tablo kopyalandı');
+      } catch (e) {
+        try {
+          const exportData = getTableExportData(id);
+          if (!exportData) return alert('Tablo bulunamadı');
+          const text = [exportData.headers, ...exportData.rows]
+            .map((row) => row.join('\t'))
+            .join('\n');
+          fallbackCopyText(text);
+          alert('Tablo kopyalandı');
+        } catch (fallbackError) {
+          alert('Kopyalama desteklenmiyor: ' + fallbackError.message);
+        }
+      }
     }
     function filterTasks(section) {
       try {
@@ -1391,32 +1726,28 @@
         const serverActive = "<%= active || '' %>";
         if (serverActive) {
           showSection(serverActive);
+          if (serverActive === 'adliye-listesi') restoreActiveAdliye();
           return;
         }
         const params = new URLSearchParams(window.location.search);
         const active = params.get('active');
-        if (active) showSection(active);
+        if (active) {
+          showSection(active);
+          if (active === 'adliye-listesi') restoreActiveAdliye();
+          return;
+        }
+        restoreActiveAdliye();
       } catch (e) { }
     });
 
-    // Scroll pozisyonunu koru (dashboard özel anahtar)
-    document.addEventListener('DOMContentLoaded', function () {
-      const key = 'dashboardScrollPos';
-      const saved = sessionStorage.getItem(key);
-      if (saved) {
-        window.scrollTo(0, parseInt(saved));
-        sessionStorage.removeItem(key);
-      }
-
-      // Sadece .scroll-form sınıfı olan formları dinle
-      document.querySelectorAll('.scroll-form').forEach(function (form) {
-        form.addEventListener('submit', function () {
-          sessionStorage.setItem(key, window.scrollY);
-        });
-      });
-    });
-
   </script>
+  <script>
+    window.__scrollLockConfig = {
+      storageKey: 'scroll-lock:/dashboard',
+      formSelector: 'form.scroll-form'
+    };
+  </script>
+  <script src="/scroll-lock.js"></script>
 </body>
 
 </html>

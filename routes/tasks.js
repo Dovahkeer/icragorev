@@ -1,17 +1,155 @@
 const express = require('express');
+const fs = require('fs');
 const multer = require('multer');
+const path = require('path');
 const xlsx = require('xlsx');
 const { db } = require('../config/database');
 const { requireAuth, requireRole } = require('../middleware/auth');
 const { computeAdliye, normalizeText } = require('../helpers/adliye');
 
 const upload = multer({ dest: 'tmp/' });
+const noteAttachmentsDir = path.join(__dirname, '..', 'public', 'uploads', 'note-attachments');
+const allowedNoteAttachmentMimeTypes = new Set(['image/jpeg', 'image/png', 'application/pdf']);
+
+if (!fs.existsSync(noteAttachmentsDir)) {
+  fs.mkdirSync(noteAttachmentsDir, { recursive: true });
+}
+
+const noteAttachmentStorage = multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, noteAttachmentsDir),
+  filename: (_req, file, cb) => {
+    const ext = path.extname(file.originalname || '').toLowerCase();
+    const safeBase = normalizeText(path.basename(file.originalname || 'attachment', ext))
+      .replace(/\s+/g, '-')
+      .slice(0, 40) || 'attachment';
+    cb(null, `${Date.now()}-${safeBase}${ext}`);
+  }
+});
+
+const noteAttachmentUpload = multer({
+  storage: noteAttachmentStorage,
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    if (allowedNoteAttachmentMimeTypes.has(file.mimetype)) return cb(null, true);
+    cb(new Error('Sadece JPEG, PNG veya PDF yükleyebilirsiniz'));
+  }
+}).single('attachment');
 
 const router = express.Router();
+const ownCreatedManagerDashboardUserIds = new Set([4]);
+const archivedTaskStatuses = ['arsiv', 'teyitlenmedi'];
+const hiddenAdliyeStatuses = ['arsiv', 'teyitlenmedi', 'son_onay_bekliyor'];
+
+function buildAdliyeTasksBaseQuery(role, userId) {
+  if (!['atayan', 'yonetici', 'atanan'].includes(role)) return null;
+
+  let query = db('tasks')
+    .whereNotNull('adliye')
+    .whereNotIn('status', hiddenAdliyeStatuses);
+
+  if (role === 'atayan') {
+    query = query.where('creator_id', userId);
+  }
+
+  return query;
+}
+
+function buildSafeFileSlug(value) {
+  return normalizeText(String(value || ''))
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '') || 'adliye';
+}
+
+function buildSafeSheetName(value) {
+  return String(value || 'Adliye')
+    .replace(/[\\\/\?\*\[\]:]/g, ' ')
+    .trim()
+    .slice(0, 31) || 'Adliye';
+}
+
+function toPublicAttachmentPath(filePath) {
+  if (!filePath) return null;
+  const relative = path.relative(path.join(__dirname, '..', 'public'), filePath);
+  return relative.split(path.sep).join('/');
+}
+
+function removePublicAttachment(relativePath) {
+  if (!relativePath) return;
+
+  const normalized = String(relativePath).replace(/^\/+/, '').split('/').join(path.sep);
+  const absolutePath = path.join(__dirname, '..', 'public', normalized);
+
+  try {
+    if (fs.existsSync(absolutePath)) {
+      fs.unlinkSync(absolutePath);
+    }
+  } catch (err) {
+    console.error('Attachment cleanup error:', err);
+  }
+}
+
+function handleNoteAttachmentUpload(req, res, next) {
+  noteAttachmentUpload(req, res, (err) => {
+    if (!err) return next();
+
+    const returnTo = req.body?.returnTo || 'gorevler';
+    req.session._active = returnTo;
+    res.status(400).send(err.message || 'Dosya yüklenemedi');
+  });
+}
+
+async function ensureTaskHistoryNoteColumns() {
+  const cols = await db.raw("PRAGMA table_info('task_history')");
+  const rows = (cols && cols.rows) ? cols.rows : (Array.isArray(cols) ? cols : []);
+  const colNames = rows.map((row) => row.name);
+
+  if (!colNames.includes('updated_at')) {
+    await db.raw("ALTER TABLE task_history ADD COLUMN updated_at DATETIME");
+  }
+
+  if (!colNames.includes('attachment_path')) {
+    await db.raw("ALTER TABLE task_history ADD COLUMN attachment_path TEXT");
+  }
+
+  if (!colNames.includes('attachment_original_name')) {
+    await db.raw("ALTER TABLE task_history ADD COLUMN attachment_original_name TEXT");
+  }
+
+  if (!colNames.includes('attachment_mime_type')) {
+    await db.raw("ALTER TABLE task_history ADD COLUMN attachment_mime_type TEXT");
+  }
+
+  if (!colNames.includes('attachment_size')) {
+    await db.raw("ALTER TABLE task_history ADD COLUMN attachment_size INTEGER");
+  }
+}
+
+async function getLatestNotesByTaskIds(taskIds) {
+  const uniqueTaskIds = [...new Set((taskIds || []).map((id) => parseInt(id, 10)).filter(Boolean))];
+  if (!uniqueTaskIds.length) return {};
+
+  const notes = await db('task_history')
+    .whereIn('task_id', uniqueTaskIds)
+    .where('action', 'note')
+    .orderBy('created_at', 'desc')
+    .select('id', 'task_id', 'user_id', 'details', 'created_at', 'attachment_path', 'attachment_original_name', 'attachment_mime_type');
+
+  const latestNotesByTaskId = {};
+  notes.forEach((note) => {
+    const taskId = parseInt(note.task_id, 10);
+    if (!latestNotesByTaskId[taskId]) {
+      latestNotesByTaskId[taskId] = note;
+    }
+  });
+
+  return latestNotesByTaskId;
+}
 
 router.get('/dashboard', requireAuth, async (req, res) => {
   const role = req.session.userRole;
   const userId = req.session.userId;
+  const managerOwnCreatedViewOnly = role === 'yonetici' && ownCreatedManagerDashboardUserIds.has(userId);
 
   try {
     let tasks = [];
@@ -21,13 +159,16 @@ router.get('/dashboard', requireAuth, async (req, res) => {
     if (role === 'atayan') {
       const visibleCreatorIds = [userId];
       if (req.session.username === 'tugberkoznacar') {
-        const sevvalUser = await db('users')
-          .where({ username: 'sevvalfidan' })
-          .first('id');
-        if (sevvalUser && sevvalUser.id) {
-          visibleCreatorIds.push(sevvalUser.id);
-          sharedCreatorUsernames.push('sevvalfidan');
-        }
+        const sharedUsers = await db('users')
+          .whereIn('username', ['sevvalfidan', 'serenafaktoring'])
+          .select('id', 'username');
+
+        sharedUsers.forEach((sharedUser) => {
+          if (sharedUser && sharedUser.id) {
+            visibleCreatorIds.push(sharedUser.id);
+            sharedCreatorUsernames.push(sharedUser.username);
+          }
+        });
       }
 
       const myTasks = await db('tasks')
@@ -42,7 +183,7 @@ router.get('/dashboard', requireAuth, async (req, res) => {
 
       const archived = await db('tasks')
         .where('creator_id', userId)
-        .where('status', 'arsiv')
+        .whereIn('status', ['arsiv', 'teyitlenmedi'])
         .count('id as count')
         .first();
 
@@ -79,17 +220,27 @@ router.get('/dashboard', requireAuth, async (req, res) => {
         .orderBy('created_at', 'desc')
         .select('tasks.*');
 
+      let myCreatedTasks = [];
+      if (managerOwnCreatedViewOnly) {
+        myCreatedTasks = await db('tasks')
+          .where('creator_id', userId)
+          .whereNotIn('status', ['arsiv', 'teyitlenmedi', 'son_onay_bekliyor'])
+          .orderBy('created_at', 'desc')
+          .select('tasks.*');
+      }
+
       const assigned = await db('tasks')
         .where('manager_id', userId)
         .count('id as count')
         .first();
 
-      tasks = { toDistribute, forControl, forFinalApproval, myAssignedTasks };
+      tasks = { toDistribute, forControl, forFinalApproval, myAssignedTasks, myCreatedTasks };
       stats = {
         toDistribute: toDistribute.length,
         forControl: forControl.length,
         forFinalApproval: forFinalApproval.length,
         myAssignedTasks: myAssignedTasks.length,
+        createdByMe: myCreatedTasks.length,
         assigned: assigned.count,
         total: toDistribute.length + forControl.length + forFinalApproval.length + myAssignedTasks.length
       };
@@ -140,17 +291,18 @@ router.get('/dashboard', requireAuth, async (req, res) => {
 
     console.log('📊 User Stats:', userStats);
 
-    // Admin-only: gather adliye list and tasks grouped by adliye
+    // Gather adliye list and tasks grouped by adliye
     let adliyeler = [];
     let tasksByAdliye = {};
-    if (role === 'yonetici') {
-      const raw = await db('tasks').select('adliye').whereNotNull('adliye').whereNot('status', 'arsiv').distinct();
+    const adliyeBaseQuery = buildAdliyeTasksBaseQuery(role, userId);
+    if (adliyeBaseQuery) {
+      const raw = await adliyeBaseQuery.clone().select('adliye').distinct();
       adliyeler = raw.map(r => r.adliye).filter(a => a);
       // Ensure 'Ofis' exists as a special adliye for managers
-      if (!adliyeler.includes('Ofis')) adliyeler.unshift('Ofis');
+      if (role === 'yonetici' && !adliyeler.includes('Ofis')) adliyeler.unshift('Ofis');
       if (adliyeler.length) {
         for (const a of adliyeler) {
-          const rows = await db('tasks').where({ adliye: a }).whereNot('status', 'arsiv').orderBy('created_at', 'desc').select('*');
+          const rows = await adliyeBaseQuery.clone().where({ adliye: a }).orderBy('created_at', 'desc').select('*');
           tasksByAdliye[a] = rows;
         }
       }
@@ -160,19 +312,28 @@ router.get('/dashboard', requireAuth, async (req, res) => {
     const tebligatlar = await db('tebligatlar').orderBy('tarih', 'desc').select('*');
 
     // gather task ids visible on this dashboard to fetch note histories
-    const taskIds = [];
+    const taskIdSet = new Set();
+    let taskIds = [];
     if (role === 'atayan') {
-      (tasks.myTasks || []).forEach(t => taskIds.push(t.id));
-      (tasks.forApproval || []).forEach(t => taskIds.push(t.id));
+      (tasks.myTasks || []).forEach(t => taskIdSet.add(parseInt(t.id, 10)));
+      (tasks.forApproval || []).forEach(t => taskIdSet.add(parseInt(t.id, 10)));
     } else if (role === 'yonetici') {
-      (tasks.toDistribute || []).forEach(t => taskIds.push(t.id));
-      (tasks.forControl || []).forEach(t => taskIds.push(t.id));
-      (tasks.forFinalApproval || []).forEach(t => taskIds.push(t.id));
-      (tasks.myAssignedTasks || []).forEach(t => taskIds.push(t.id));
+      (tasks.myCreatedTasks || []).forEach(t => taskIdSet.add(parseInt(t.id, 10)));
+      (tasks.toDistribute || []).forEach(t => taskIdSet.add(parseInt(t.id, 10)));
+      (tasks.forControl || []).forEach(t => taskIdSet.add(parseInt(t.id, 10)));
+      (tasks.forFinalApproval || []).forEach(t => taskIdSet.add(parseInt(t.id, 10)));
+      (tasks.myAssignedTasks || []).forEach(t => taskIdSet.add(parseInt(t.id, 10)));
+      taskIds = [...taskIdSet].filter(Boolean);
       console.log('📊 Yönetici taskIds:', taskIds);
     } else if (role === 'atanan') {
-      (tasks || []).forEach(t => taskIds.push(t.id));
+      (tasks || []).forEach(t => taskIdSet.add(parseInt(t.id, 10)));
     }
+
+    Object.values(tasksByAdliye).forEach((rows) => {
+      (rows || []).forEach((task) => taskIdSet.add(parseInt(task.id, 10)));
+    });
+
+    taskIds = [...taskIdSet].filter(Boolean);
 
     let historiesByTask = {};
     if (taskIds.length) {
@@ -204,6 +365,7 @@ router.get('/dashboard', requireAuth, async (req, res) => {
       userId: req.session.userId,
       historiesByTask,
       sharedCreatorUsernames,
+      managerOwnCreatedViewOnly,
       active: activeSection
     });
   } catch (error) {
@@ -358,26 +520,181 @@ router.post('/tasks/:id/status', requireAuth, async (req, res) => {
 });
 
 // Add note to a task (visible to all roles)
-router.post('/tasks/:id/note', requireAuth, async (req, res) => {
+router.post('/tasks/:id/note', requireAuth, handleNoteAttachmentUpload, async (req, res) => {
   try {
     const taskId = parseInt(req.params.id, 10);
-    const { note } = req.body;
+    const noteText = String(req.body.note || '').trim();
     const returnTo = req.body.returnTo || 'gorevler';
-    if (!note || !note.trim()) return res.redirect('/dashboard' + (returnTo ? ('?active=' + encodeURIComponent(returnTo)) : ''));
+    const attachment = req.file || null;
+
+    if (!noteText && !attachment) {
+      return res.redirect('/dashboard' + (returnTo ? ('?active=' + encodeURIComponent(returnTo)) : ''));
+    }
+
+    await ensureTaskHistoryNoteColumns();
 
     await db('task_history').insert({
       task_id: taskId,
       user_id: req.session.userId,
       action: 'note',
-      details: note.trim(),
-      created_at: db.fn.now()
+      details: noteText || null,
+      attachment_path: attachment ? toPublicAttachmentPath(attachment.path) : null,
+      attachment_original_name: attachment ? attachment.originalname : null,
+      attachment_mime_type: attachment ? attachment.mimetype : null,
+      attachment_size: attachment ? attachment.size : null,
+      created_at: db.fn.now(),
+      updated_at: db.fn.now()
     });
 
     req.session._active = returnTo;
     return res.redirect('/dashboard');
   } catch (err) {
+    if (req.file) {
+      removePublicAttachment(toPublicAttachmentPath(req.file.path));
+    }
     console.error('Note save error', err);
     res.status(500).send('Not kaydedilemedi');
+  }
+});
+
+router.post('/tasks/:taskId/notes/:noteId/edit', requireAuth, handleNoteAttachmentUpload, async (req, res) => {
+  try {
+    const taskId = parseInt(req.params.taskId, 10);
+    const noteId = parseInt(req.params.noteId, 10);
+    const noteText = String(req.body.note || '').trim();
+    const returnTo = req.body.returnTo || 'adliye-listesi';
+    const removeAttachment = req.body.remove_attachment === '1';
+    const newAttachment = req.file || null;
+
+    if (!noteText && !newAttachment && !removeAttachment) {
+      req.session._active = returnTo;
+      return res.redirect('/dashboard');
+    }
+
+    const noteEntry = await db('task_history')
+      .where({ id: noteId, task_id: taskId, action: 'note' })
+      .first();
+
+    if (!noteEntry) {
+      return res.status(404).send('Not bulunamadı');
+    }
+
+    const canEditNote = parseInt(noteEntry.user_id, 10) === req.session.userId
+      || ['atayan', 'yonetici'].includes(req.session.userRole);
+
+    if (!canEditNote) {
+      return res.status(403).send('Bu notu düzenleyemezsiniz');
+    }
+
+    await ensureTaskHistoryNoteColumns();
+
+    const updateData = {
+      details: noteText || null,
+      updated_at: db.fn.now()
+    };
+
+    if (removeAttachment) {
+      updateData.attachment_path = null;
+      updateData.attachment_original_name = null;
+      updateData.attachment_mime_type = null;
+      updateData.attachment_size = null;
+    }
+
+    if (newAttachment) {
+      updateData.attachment_path = toPublicAttachmentPath(newAttachment.path);
+      updateData.attachment_original_name = newAttachment.originalname;
+      updateData.attachment_mime_type = newAttachment.mimetype;
+      updateData.attachment_size = newAttachment.size;
+    }
+
+    await db('task_history')
+      .where({ id: noteId })
+      .update(updateData);
+
+    if ((removeAttachment || newAttachment) && noteEntry.attachment_path) {
+      removePublicAttachment(noteEntry.attachment_path);
+    }
+
+    req.session._active = returnTo;
+    return res.redirect('/dashboard');
+  } catch (err) {
+    if (req.file) {
+      removePublicAttachment(toPublicAttachmentPath(req.file.path));
+    }
+    console.error('Note edit error', err);
+    res.status(500).send('Not güncellenemedi');
+  }
+});
+
+router.get('/adliye-list/export', requireRole('atayan', 'yonetici', 'atanan'), async (req, res) => {
+  const adliye = String(req.query.adliye || '').trim();
+
+  if (!adliye) {
+    return res.status(400).send('Adliye bilgisi gerekli');
+  }
+
+  try {
+    const adliyeBaseQuery = buildAdliyeTasksBaseQuery(req.session.userRole, req.session.userId);
+
+    if (!adliyeBaseQuery) {
+      return res.status(403).send('Bu listeyi indiremezsiniz');
+    }
+
+    const tasks = await adliyeBaseQuery.clone()
+      .where({ adliye })
+      .orderBy('created_at', 'desc')
+      .select('*');
+
+    const latestNotesByTaskId = await getLatestNotesByTaskIds(tasks.map((task) => task.id));
+    const users = await db('users').select('id', 'username');
+    const usersById = Object.fromEntries(users.map((user) => [parseInt(user.id, 10), user.username]));
+
+    const exportRows = tasks.map((task) => {
+      const latestNote = latestNotesByTaskId[parseInt(task.id, 10)];
+      return {
+        ID: task.id,
+        Adliye: task.adliye || '',
+        'İşlem Türü': task.islem_turu || '',
+        'İcra Dairesi': task.icra_dairesi || '',
+        'Dosya No': task.icra_esas_no || '',
+        Müvekkil: task.muvekkil || '',
+        Portföy: task.portfoy || '',
+        Borçlu: task.borclu || '',
+        Durum: task.status || '',
+        Atanan: task.assignee_id ? (usersById[parseInt(task.assignee_id, 10)] || task.assignee_id) : '',
+        'Son Not': latestNote ? latestNote.details : '',
+        'Not Sahibi': latestNote ? (usersById[parseInt(latestNote.user_id, 10)] || latestNote.user_id) : ''
+      };
+    });
+
+    const workbook = xlsx.utils.book_new();
+    const worksheet = xlsx.utils.json_to_sheet(exportRows);
+    worksheet['!cols'] = [
+      { wch: 8 },
+      { wch: 14 },
+      { wch: 24 },
+      { wch: 28 },
+      { wch: 18 },
+      { wch: 18 },
+      { wch: 18 },
+      { wch: 24 },
+      { wch: 18 },
+      { wch: 18 },
+      { wch: 40 },
+      { wch: 18 }
+    ];
+
+    xlsx.utils.book_append_sheet(workbook, worksheet, buildSafeSheetName(adliye));
+
+    const fileName = `adliye-${buildSafeFileSlug(adliye)}-${new Date().toISOString().slice(0, 10)}.xlsx`;
+    const buffer = xlsx.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    res.type('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    return res.send(buffer);
+  } catch (err) {
+    console.error('Adliye export error', err);
+    res.status(500).send('Excel oluşturulamadı');
   }
 });
 
@@ -542,7 +859,7 @@ router.post('/tasks/:id/final-approve', requireRole('atayan', 'yonetici'), async
 router.get('/archive', requireAuth, async (req, res) => {
   try {
     const tasks = await db('tasks')
-      .where('status', 'arsiv')
+      .whereIn('status', ['arsiv', 'teyitlenmedi'])
       .orderBy('updated_at', 'desc')
       .select('tasks.*');
 
@@ -569,7 +886,7 @@ router.post('/archive/tasks/:id/delete', requireRole('atayan'), async (req, res)
   try {
     const task = await db('tasks').where({ id }).first();
     if (!task) return res.status(404).send('Görev bulunamadı');
-    if (task.status !== 'arsiv') return res.status(400).send('Görev arşivde değil');
+    if (!['arsiv', 'teyitlenmedi'].includes(task.status)) return res.status(400).send('Görev arşivde değil');
 
     await db('task_history').insert({
       task_id: id,
@@ -813,7 +1130,7 @@ router.get('/all-tasks', requireAuth, async (req, res) => {
     const { status, oncelik, adliye, muvekkil, creator, assignee } = req.query;
 
     let query = db('tasks')
-      .whereNot('status', 'arsiv')
+      .whereNotIn('status', ['arsiv', 'teyitlenmedi'])
       .orderBy('created_at', 'desc');
 
     // Filtreler
@@ -859,3 +1176,4 @@ router.get('/all-tasks', requireAuth, async (req, res) => {
 });
 
 module.exports = router;
+

@@ -95,8 +95,9 @@ router.post('/tebligat/:id/update', requireAuth, async (req, res) => {
       return res.status(404).send('Tebligat bulunamadı');
     }
 
-    // Eğer durum "tebliğ" (Kesinleşti) veya "itiraz" ise, arşive taşı
-    if (durum === 'tebliğ' || durum === 'itiraz') {
+    // Sadece yönetici "Kesinleşti" yaptığında arşive taşı
+    const shouldArchive = durum === 'tebliğ' && req.session.userRole === 'yonetici';
+    if (shouldArchive) {
       // Tebligatı arşiv tablosuna ekle
       await db('tebligat_arsiv').insert({
         muvekkil: muvekkil || currentTebligat.muvekkil,
@@ -150,8 +151,9 @@ router.post('/tebligat/:id/update-status', requireAuth, async (req, res) => {
     const id = req.params.id;
     const { durum } = req.body;
 
-    // Eğer durum "tebliğ" (Kesinleşti) veya "itiraz" ise, arşive taşı
-    if (durum === 'tebliğ' || durum === 'itiraz') {
+    // Sadece yönetici "Kesinleşti" yaptığında arşive taşı
+    const shouldArchive = durum === 'tebliğ' && req.session.userRole === 'yonetici';
+    if (shouldArchive) {
       const tebligat = await db('tebligatlar').where({ id }).first();
 
       if (tebligat) {

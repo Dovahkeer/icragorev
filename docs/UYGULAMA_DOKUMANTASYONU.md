@@ -1095,7 +1095,7 @@ Sistemde tanımlı işlem türleri:
 ## Müvekkil ve Portföy Listesi
 
 ### Müvekkiller
-- GSD, Doğru, Sümer, Ulusal, Birikim, Emir, Birleşim
+- GSD, Doğru, Sümer, Ulusal, Birikim, Emir, Birleşim, AKBANK
 - GSD Faktoring, Ulusal Faktoring, Optima Faktoring, Sümer Faktoring
 - AK Faktoring, EKO Faktoring, TEB Faktoring
 
@@ -1105,6 +1105,6 @@ Sistemde tanımlı işlem türleri:
 - YKB 01, YKB 02, YKB 03, YKB 04
 - İşbank Bireysel 01, İşbank Bireysel 02
 - İşbank 01, İşbank 02, İşbank 03
-- Şeker, Garantibank, Garanti Faktöring, İNG
+- Şeker, Garantibank, Garanti Faktöring, AKBANK, İNG
 
 --

@@ -605,10 +605,20 @@ body {
   background: linear-gradient(90deg,#667eea,#764ba2);
   color: white;
 }
+.btn-secondary {
+  background: #eef2f7;
+  color: #334155;
+  border: 1px solid #d9e1ea;
+}
 .btn-note {
   background: #eef2ff;
   color: #3b3f9e;
   border: 1px solid #dde4ff;
+}
+.btn-note-edit {
+  margin-left: 0.5rem;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.72rem;
 }
 .btn:hover { transform: translateY(-1px); }
 
@@ -647,6 +657,16 @@ body {
   font-size: 0.85rem;
   line-height: 1.4;
 }
+.note-empty {
+  color: #64748b;
+  font-size: 0.82rem;
+  padding: 0.35rem 0;
+}
+.note-action-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
 .note-form textarea { 
   width: 100%; 
   min-height: 50px; 
@@ -655,6 +675,65 @@ body {
   border: 1px solid #e6e6e6;
   font-size: 0.85rem;
   font-family: inherit;
+}
+.note-upload-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-top: 0.5rem;
+}
+.note-upload-input {
+  width: 100%;
+  padding: 0.45rem;
+  border: 1px dashed #cbd5e1;
+  border-radius: 6px;
+  background: #fff;
+  font-size: 0.8rem;
+}
+.note-upload-hint {
+  color: #64748b;
+  font-size: 0.74rem;
+}
+.note-attachment {
+  margin-top: 0.45rem;
+}
+.note-attachment-image {
+  display: block;
+  max-width: min(100%, 260px);
+  max-height: 180px;
+  border-radius: 8px;
+  border: 1px solid #dbe2ea;
+  object-fit: cover;
+}
+.note-attachment-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: #2563eb;
+  text-decoration: none;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.note-attachment-link:hover {
+  text-decoration: underline;
+}
+.note-current-attachment {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background: #fff;
+}
+.note-attachment-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.4rem;
+  font-size: 0.8rem;
+  color: #475569;
+}
+.note-attachment-toggle input {
+  margin: 0;
 }
 
 
@@ -743,6 +822,31 @@ body {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+}
+.adliye-actions {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.export-btn {
+  text-decoration: none;
+}
+.adliye-note-cell {
+  min-width: 240px;
+}
+.adliye-note-controls {
+  margin-top: 0;
+}
+.adliye-note-preview {
+  margin-top: 0.45rem;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: #334155;
+  word-break: break-word;
+}
+.adliye-note-preview.empty {
+  color: #94a3b8;
 }
 
 .copy-btn:hover {

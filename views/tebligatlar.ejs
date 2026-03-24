@@ -248,34 +248,13 @@
             </section>
         </main>
     </div>
-
     <script>
-        // Scroll pozisyonunu kaydet ve geri yükle
-        document.addEventListener('DOMContentLoaded', function () {
-            // Sayfa yüklendiğinde scroll pozisyonunu geri yükle
-            const savedScrollPos = sessionStorage.getItem('tebligatScrollPos');
-            if (savedScrollPos) {
-                window.scrollTo(0, parseInt(savedScrollPos));
-                sessionStorage.removeItem('tebligatScrollPos');
-            }
-
-            // Tüm formları dinle ve submit öncesi scroll pozisyonunu kaydet
-            const scrollForms = document.querySelectorAll('.scroll-form');
-            scrollForms.forEach(form => {
-                form.addEventListener('submit', function () {
-                    sessionStorage.setItem('tebligatScrollPos', window.scrollY);
-                });
-            });
-
-            // Tebligat oluştur formu için de scroll pozisyonunu kaydet
-            const createForm = document.querySelector('form[action="/tebligat/create"]');
-            if (createForm) {
-                createForm.addEventListener('submit', function () {
-                    sessionStorage.setItem('tebligatScrollPos', window.scrollY);
-                });
-            }
-        });
+        window.__scrollLockConfig = {
+            storageKey: 'scroll-lock:/tebligatlar',
+            formSelector: 'form.scroll-form'
+        };
     </script>
+    <script src="/scroll-lock.js"></script>
 </body>
 
 </html>
