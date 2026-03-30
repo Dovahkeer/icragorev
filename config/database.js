@@ -291,7 +291,7 @@ async function initDatabase() {
     try {
       const passwordFaktoring = await bcrypt.hash('faktoring', 10);
 
-      const usersToEnsure = ['tugberkoznacar', 'ridvanyucel', 'sevvalfidan', 'serenafaktoring'];
+      const usersToEnsure = ['tugberkoznacar', 'ridvanyucel', 'sevvalfidan', 'serenafaktoring', 'mehtapsolak'];
       for (const uname of usersToEnsure) {
         const u = await db('users').where({ username: uname }).first();
         if (!u) {
@@ -329,6 +329,27 @@ async function initDatabase() {
       }
     } catch (e) {
       console.error('habibyalin kullanıcısı ekleme/güncelleme sırasında hata:', e);
+    }
+
+    // Normalize legacy task values created before dropdown fixes
+    try {
+      const normalizedPortfoyCount = await db('tasks')
+        .where({ portfoy: 'GSD Faktoring' })
+        .update({ portfoy: 'Faktoringler' });
+
+      const normalizedMuvekkilCount = await db('tasks')
+        .whereIn('muvekkil', ['Ulusal', 'ULUSAL Faktoring'])
+        .update({ muvekkil: 'Ulusal Faktoring' });
+
+      if (normalizedPortfoyCount > 0) {
+        console.log(`✓ ${normalizedPortfoyCount} görevde portföy değeri 'Faktoringler' olarak düzeltildi`);
+      }
+
+      if (normalizedMuvekkilCount > 0) {
+        console.log(`✓ ${normalizedMuvekkilCount} görevde müvekkil değeri 'Ulusal Faktoring' olarak düzeltildi`);
+      }
+    } catch (e) {
+      console.error('Görev seçenekleri normalizasyonu sırasında hata:', e);
     }
 
     console.log('✓ Veritabanı hazır!');

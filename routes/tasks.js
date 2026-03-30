@@ -160,7 +160,7 @@ router.get('/dashboard', requireAuth, async (req, res) => {
       const visibleCreatorIds = [userId];
       if (req.session.username === 'tugberkoznacar') {
         const sharedUsers = await db('users')
-          .whereIn('username', ['sevvalfidan', 'serenafaktoring'])
+          .whereIn('username', ['sevvalfidan', 'serenafaktoring', 'mehtapsolak'])
           .select('id', 'username');
 
         sharedUsers.forEach((sharedUser) => {
