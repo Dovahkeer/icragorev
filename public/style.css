@@ -841,6 +841,33 @@ body {
 .adliye-note-preview.empty {
   color: #94a3b8;
 }
+.tebligat-entry-cell {
+  min-width: 260px;
+  vertical-align: top;
+}
+.tebligat-entry-panel {
+  margin-top: 0.5rem;
+}
+.tebligat-entry-form {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+.tebligat-entry-form input {
+  flex: 1;
+  margin: 0;
+}
+.tebligat-entry-form button {
+  white-space: nowrap;
+}
+.tebligat-entry-actions {
+  margin-top: 0.5rem;
+}
+.btn-danger-lite {
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
 
 .copy-btn:hover {
   transform: translateY(-2px);

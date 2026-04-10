@@ -4,9 +4,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tebligatlar - <%= username %>
-    </title>
+    <title>Tebligatlar - <%= username %></title>
     <link rel="stylesheet" href="/style.css">
+    <%
+        const filterQuery = new URLSearchParams(filters || {}).toString();
+        const formatDate = (value) => {
+            if (!value) return '-';
+            const date = new Date(value);
+            return Number.isNaN(date.getTime()) ? '-' : date.toLocaleDateString('tr-TR');
+        };
+        const formatDateTime = (value) => {
+            if (!value) return '-';
+            const date = new Date(value);
+            return Number.isNaN(date.getTime()) ? '-' : date.toLocaleString('tr-TR');
+        };
+        const previewText = (value, length = 80) => {
+            const text = String(value || '').trim();
+            return text.length > length ? text.slice(0, length) + '...' : text;
+        };
+    %>
 </head>
 
 <body>
@@ -14,10 +30,8 @@
         <aside class="sidebar">
             <div class="sidebar-header">
                 <div class="sidebar-header-info">
-                    <h2>PORTFÖY İNCELEME VE FAKTORİNG GÖREV YÖNETİMİ</h2>
-                    <p>
-                        <%= username %> (<%= role %>)
-                    </p>
+                    <h2>PORTFOY INCELEME VE FAKTORING GOREV YONETIMI</h2>
+                    <p><%= username %> (<%= role %>)</p>
                 </div>
             </div>
             <nav class="sidebar-menu">
@@ -27,7 +41,7 @@
                 </a>
                 <a href="/all-tasks" class="menu-item">
                     <span class="menu-item-icon">📋</span>
-                    <span>Tüm Görevler</span>
+                    <span>Tum Gorevler</span>
                 </a>
                 <a href="/tebligatlar" class="menu-item active">
                     <span class="menu-item-icon">📝</span>
@@ -35,88 +49,80 @@
                 </a>
                 <a href="/archive" class="menu-item">
                     <span class="menu-item-icon">📦</span>
-                    <span>Arşiv</span>
+                    <span>Arsiv</span>
                 </a>
             </nav>
             <div class="sidebar-footer">
                 <form method="GET" action="/logout">
-                    <button type="submit" class="logout-btn">Çıkış Yap</button>
+                    <button type="submit" class="logout-btn">Cikis Yap</button>
                 </form>
             </div>
         </aside>
 
         <main class="main-content">
             <div class="content-header">
-                <h1>Tebligat Yönetimi</h1>
-                <p class="breadcrumb">Tebligat oluşturma ve takip işlemleri</p>
+                <h1>Tebligat Yonetimi</h1>
+                <p class="breadcrumb">Tebligat olusturma ve takip islemleri</p>
             </div>
 
-            <!-- Tebligat Oluştur -->
             <section id="tebligat-olustur" class="section active" style="margin-bottom: 2rem;">
-                <h2>Tebligat Oluştur</h2>
-                <form method="POST" action="/tebligat/create?<%= new URLSearchParams(filters).toString() %>"
-                    class="task-form">
-                    <input type="text" name="muvekkil" placeholder="Müvekkil">
-                    <input type="text" name="portfoy" placeholder="Portföy">
+                <h2>Tebligat Olustur</h2>
+                <form method="POST" action="/tebligat/create?<%= filterQuery %>" class="task-form">
+                    <input type="text" name="muvekkil" placeholder="Muvekkil">
+                    <input type="text" name="portfoy" placeholder="Portfoy">
                     <input type="text" name="taraf" placeholder="Taraf">
                     <input type="text" name="tckn_vkn" placeholder="TCKN / VKN">
-                    <input type="text" name="barkod" placeholder="Barkod No">
+                    <input type="text" name="barkod" placeholder="Ilk Barkod No">
                     <input type="text" name="dosya_no" placeholder="Dosya No *" required>
-                    <input type="text" name="icra_dairesi" placeholder="İcra Dairesi *" required>
-                    <div style="display:flex;gap:0.5rem;align-items:center;">
+                    <input type="text" name="icra_dairesi" placeholder="Icra Dairesi *" required>
+                    <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
                         <label style="display:flex;gap:0.5rem;align-items:center;margin:0;">
                             <input type="radio" name="durum" value="itiraz" checked>
-                            <span>İtiraz</span>
+                            <span>Itiraz</span>
                         </label>
                         <label style="display:flex;gap:0.5rem;align-items:center;margin:0;">
                             <input type="radio" name="durum" value="gönderildi">
-                            <span>Gönderildi</span>
+                            <span>Gonderildi</span>
                         </label>
                         <label style="display:flex;gap:0.5rem;align-items:center;margin:0;">
                             <input type="radio" name="durum" value="tebliğ">
-                            <span>Kesinleşti</span>
+                            <span>Kesinlesti</span>
                         </label>
                     </div>
-                    <textarea name="not" placeholder="Not"></textarea>
-                    <button type="submit">Oluştur</button>
+                    <textarea name="not" placeholder="Ilk not"></textarea>
+                    <button type="submit">Olustur</button>
                 </form>
             </section>
 
-            <!-- Filtreleme Bölümü -->
             <section class="section active" style="margin-bottom: 1.5rem;">
                 <h2>Filtreleme</h2>
                 <form id="filter-form" method="GET" action="/tebligatlar" class="task-form"
-                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                    style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
                     <select name="durum" style="padding:0.75rem; border-radius:8px; border:1px solid #e0e0e0;">
-                        <option value="">Tüm Durumlar</option>
-                        <option value="gönderildi" <%=filters.durum==='gönderildi' ? 'selected' : '' %>>Gönderildi
-                        </option>
-                        <option value="itiraz" <%=filters.durum==='itiraz' ? 'selected' : '' %>>İtiraz</option>
-                        <option value="tebliğ" <%=filters.durum==='tebliğ' ? 'selected' : '' %>>Kesinleşti
-                        </option>
-                        <option value="iade" <%=filters.durum==='iade' ? 'selected' : '' %>>İade</option>
+                        <option value="">Tum Durumlar</option>
+                        <option value="gönderildi" <%= filters.durum === 'gönderildi' ? 'selected' : '' %>>Gonderildi</option>
+                        <option value="itiraz" <%= filters.durum === 'itiraz' ? 'selected' : '' %>>Itiraz</option>
+                        <option value="tebliğ" <%= filters.durum === 'tebliğ' ? 'selected' : '' %>>Kesinlesti</option>
+                        <option value="iade" <%= filters.durum === 'iade' ? 'selected' : '' %>>Iade</option>
                     </select>
-                    <input type="text" name="icra_dairesi" placeholder="İcra Dairesi"
-                        value="<%= filters.icra_dairesi || '' %>">
-                    <input type="text" name="muvekkil" placeholder="Müvekkil" value="<%= filters.muvekkil || '' %>">
+                    <input type="text" name="icra_dairesi" placeholder="Icra Dairesi" value="<%= filters.icra_dairesi || '' %>">
+                    <input type="text" name="muvekkil" placeholder="Muvekkil" value="<%= filters.muvekkil || '' %>">
                     <select name="ekleyen" style="padding:0.75rem; border-radius:8px; border:1px solid #e0e0e0;">
-                        <option value="">Tüm Kullanıcılar</option>
+                        <option value="">Tum Kullanicilar</option>
                         <% users.forEach(function(u) { %>
-                            <option value="<%= u.id %>" <%=filters.ekleyen==u.id ? 'selected' : '' %>><%= u.username %>
-                            </option>
-                            <% }) %>
+                            <option value="<%= u.id %>" <%= String(filters.ekleyen) === String(u.id) ? 'selected' : '' %>><%= u.username %></option>
+                        <% }) %>
                     </select>
-                    <div style="display: flex; gap: 0.5rem;">
-                        <button type="submit" style="flex: 1;">Filtrele</button>
+                    <div style="display:flex; gap:0.5rem;">
+                        <button type="submit" style="flex:1;">Filtrele</button>
                         <a href="/tebligatlar"
                             style="padding:0.75rem 1.5rem; background:#6b7280; color:white; border:none; border-radius:8px; cursor:pointer; text-decoration:none; display:inline-block; text-align:center;">Temizle</a>
                     </div>
                 </form>
             </section>
 
-            <!-- Tebligat Listesi - Modern Tablo -->
             <section id="tebligat-listesi" class="section active">
-                <h2>Tebligat Listesi (<%= tebligatlar.length %> kayıt)</h2>
+                <h2>Tebligat Listesi (<%= tebligatlar.length %> kayit)</h2>
                 <% if (tebligatlar && tebligatlar.length) { %>
                     <div class="modern-table-wrapper">
                         <table class="modern-table">
@@ -124,130 +130,180 @@
                                 <tr>
                                     <th>ID</th>
                                     <th>Dosya No</th>
-                                    <th>İcra Dairesi</th>
-                                    <th>Müvekkil</th>
-                                    <th>Portföy</th>
+                                    <th>Icra Dairesi</th>
+                                    <th>Muvekkil</th>
+                                    <th>Portfoy</th>
                                     <th>Taraf</th>
                                     <th>TCKN/VKN</th>
                                     <th>Tarih</th>
-                                    <th>Barkod</th>
-                                    <th>Not</th>
+                                    <th>Barkodlar</th>
+                                    <th>Notlar</th>
                                     <th>Ekleyen</th>
-                                    <th>İşlemler</th>
+                                    <th>Islemler</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <% tebligatlar.forEach(function(t){ %>
+                                <% tebligatlar.forEach(function(t) { %>
                                     <tr>
                                         <td><span class="id-badge">#<%= t.id %></span></td>
-                                        <td><strong>
-                                                <%= t.dosya_no || '-' %>
-                                            </strong></td>
-                                        <td>
-                                            <%= t.icra_dairesi || '-' %>
-                                        </td>
-                                        <td>
-                                            <%= t.muvekkil || '-' %>
-                                        </td>
-                                        <td>
-                                            <%= t.portfoy || '-' %>
-                                        </td>
-                                        <td>
-                                            <%= t.taraf || '-' %>
-                                        </td>
-                                        <td>
-                                            <%= t.tckn_vkn || '-' %>
-                                        </td>
-                                        <td>
-                                            <%= t.tarih %>
-                                        </td>
-                                        <td>
-                                            <form method="POST"
-                                                action="/tebligat/<%= t.id %>/update-barkod?<%= new URLSearchParams(filters).toString() %>"
-                                                class="scroll-form" style="margin:0;">
-                                                <input type="text" name="barkod" value="<%= t.barkod || '' %>"
-                                                    placeholder="Barkod"
-                                                    style="padding:0.4rem; border-radius:6px; border:1px solid #e0e0e0; width:120px;">
-                                                <button type="submit"
-                                                    style="padding:0.4rem 0.6rem; background:#10b981; color:white; border:none; border-radius:6px; cursor:pointer; font-size:0.85rem;">✓</button>
-                                            </form>
-                                        </td>
-                                        <td>
-                                            <form method="POST"
-                                                action="/tebligat/<%= t.id %>/update-not?<%= new URLSearchParams(filters).toString() %>"
-                                                class="scroll-form" style="margin:0;">
-                                                <textarea name="notlar" placeholder="Not ekle..."
-                                                    style="padding:0.4rem; border-radius:6px; border:1px solid #e0e0e0; width:200px; min-height:60px; resize:vertical;"><%= t.notlar || '' %></textarea>
-                                                <button type="submit"
-                                                    style="padding:0.4rem 0.6rem; background:#10b981; color:white; border:none; border-radius:6px; cursor:pointer; font-size:0.85rem; margin-top:0.25rem;">Kaydet</button>
-                                            </form>
-                                        </td>
-                                        <td>
-                                            <form method="POST"
-                                                action="/tebligat/<%= t.id %>/update-user?<%= new URLSearchParams(filters).toString() %>"
-                                                class="scroll-form" style="margin:0;">
-                                                <select name="created_by"
-                                                    style="padding:0.4rem; border-radius:6px; border:1px solid #e0e0e0; width:120px;">
-                                                    <option value="">Seçiniz</option>
-                                                    <% users.forEach(function(u) { %>
-                                                        <option value="<%= u.id %>" <%=t.created_by==u.id ? 'selected'
-                                                            : '' %>><%= u.username %>
-                                                        </option>
-                                                        <% }) %>
-                                                </select>
-                                                <button type="submit"
-                                                    style="padding:0.4rem 0.6rem; background:#10b981; color:white; border:none; border-radius:6px; cursor:pointer; font-size:0.85rem; margin-top:0.25rem;">✓</button>
-                                            </form>
-                                        </td>
-                                        <td>
-                                            <div style="display:flex; gap:0.5rem; align-items:center;">
-                                                <form method="POST"
-                                                    action="/tebligat/<%= t.id %>/update-status?<%= new URLSearchParams(filters).toString() %>"
-                                                    class="scroll-form"
-                                                    style="display:flex; gap:0.5rem; align-items:center; flex:1;">
-                                                    <select name="durum"
-                                                        style="padding:0.5rem; border-radius:6px; border:1px solid #e0e0e0; flex:1;">
-                                                        <option value="">Tebliğ</option>
+                                        <td><strong><%= t.dosya_no || '-' %></strong></td>
+                                        <td><%= t.icra_dairesi || '-' %></td>
+                                        <td><%= t.muvekkil || '-' %></td>
+                                        <td><%= t.portfoy || '-' %></td>
+                                        <td><%= t.taraf || '-' %></td>
+                                        <td><%= t.tckn_vkn || '-' %></td>
+                                        <td><%= formatDate(t.tarih) %></td>
+                                        <td class="tebligat-entry-cell">
+                                            <div class="note-controls adliye-note-controls">
+                                                <button type="button" class="btn btn-note"
+                                                    onclick="toggleTebligatPanel('barkod', '<%= t.id %>')">Barkodlar (<%= t.barkodEntries.length %>)</button>
+                                            </div>
+                                            <% if (t.latestBarkodEntry) { %>
+                                                <div class="adliye-note-preview"><%= previewText(t.latestBarkodEntry.value, 50) %></div>
+                                            <% } else { %>
+                                                <div class="adliye-note-preview empty">Henuz barkod yok</div>
+                                            <% } %>
 
-                                                        <option value="gönderildi" <%=t.durum==='gönderildi'
-                                                            ? 'selected' : '' %>>Gönderildi</option>
-                                                        <option value="itiraz" <%=t.durum==='itiraz' ? 'selected' : ''
-                                                            %>>İtiraz</option>
-                                                        <option value="tebliğ" <%=t.durum==='tebliğ' ? 'selected' : ''
-                                                            %>>Kesinleşti</option>
-                                                        <option value="iade" <%=t.durum==='iade' ? 'selected' : '' %>>
-                                                            İade</option>
+                                            <div class="note-panel tebligat-entry-panel" id="tebligat-barkod-<%= t.id %>" style="display:none;">
+                                                <div class="notes-list">
+                                                    <% if (t.barkodEntries.length) { %>
+                                                        <% t.barkodEntries.forEach(function(entry) { %>
+                                                            <div class="note-item">
+                                                                <div class="note-meta">
+                                                                    <strong><%= entry.username || 'topraksezgin' %></strong>
+                                                                    ·
+                                                                    <small><%= formatDateTime(entry.created_at) %></small>
+                                                                </div>
+                                                                <div class="note-body"><%= entry.value %></div>
+                                                                <form method="POST"
+                                                                    action="/tebligat/<%= t.id %>/barkodlar/<%= encodeURIComponent(entry.id) %>/delete?<%= filterQuery %>"
+                                                                    class="scroll-form tebligat-entry-actions">
+                                                                    <button type="submit" class="btn btn-secondary btn-danger-lite"
+                                                                        onclick="return confirm('Bu barkodu listeden cikarmak istiyor musunuz?')">Cikar</button>
+                                                                </form>
+                                                            </div>
+                                                        <% }) %>
+                                                    <% } else { %>
+                                                        <div class="note-empty">Henuz barkod eklenmemis.</div>
+                                                    <% } %>
+                                                </div>
+
+                                                <form method="POST" action="/tebligat/<%= t.id %>/barkodlar?<%= filterQuery %>"
+                                                    class="scroll-form tebligat-entry-form">
+                                                    <input type="text" name="barkod" placeholder="Yeni barkod ekleyin">
+                                                    <button type="submit" class="btn btn-primary">Barkod Ekle</button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                        <td class="tebligat-entry-cell">
+                                            <div class="note-controls adliye-note-controls">
+                                                <button type="button" class="btn btn-note"
+                                                    onclick="toggleTebligatPanel('note', '<%= t.id %>')">Notlar (<%= t.noteEntries.length %>)</button>
+                                            </div>
+                                            <% if (t.latestNoteEntry) { %>
+                                                <div class="adliye-note-preview"><%= previewText(t.latestNoteEntry.text) %></div>
+                                            <% } else { %>
+                                                <div class="adliye-note-preview empty">Henuz not yok</div>
+                                            <% } %>
+
+                                            <div class="note-panel tebligat-entry-panel" id="tebligat-note-<%= t.id %>" style="display:none;">
+                                                <div class="notes-list">
+                                                    <% if (t.noteEntries.length) { %>
+                                                        <% t.noteEntries.forEach(function(entry) { %>
+                                                            <div class="note-item">
+                                                                <div class="note-meta">
+                                                                    <strong><%= entry.username || 'topraksezgin' %></strong>
+                                                                    ·
+                                                                    <small><%= formatDateTime(entry.created_at) %></small>
+                                                                </div>
+                                                                <div class="note-body"><%= entry.text %></div>
+                                                                <form method="POST"
+                                                                    action="/tebligat/<%= t.id %>/notes/<%= encodeURIComponent(entry.id) %>/delete?<%= filterQuery %>"
+                                                                    class="scroll-form tebligat-entry-actions">
+                                                                    <button type="submit" class="btn btn-secondary btn-danger-lite"
+                                                                        onclick="return confirm('Bu notu listeden cikarmak istiyor musunuz?')">Cikar</button>
+                                                                </form>
+                                                            </div>
+                                                        <% }) %>
+                                                    <% } else { %>
+                                                        <div class="note-empty">Henuz not eklenmemis.</div>
+                                                    <% } %>
+                                                </div>
+
+                                                <form method="POST" action="/tebligat/<%= t.id %>/notes?<%= filterQuery %>"
+                                                    class="note-form scroll-form">
+                                                    <textarea name="note" placeholder="Tebligat notu ekleyin..."></textarea>
+                                                    <button type="submit" class="btn btn-primary" style="margin-top:0.5rem;">Not Ekle</button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <% if (canEditCreatedBy) { %>
+                                                <form method="POST" action="/tebligat/<%= t.id %>/update-user?<%= filterQuery %>"
+                                                    class="scroll-form" style="margin:0;">
+                                                    <select name="created_by"
+                                                        style="padding:0.4rem; border-radius:6px; border:1px solid #e0e0e0; width:140px;">
+                                                        <option value="">Seciniz</option>
+                                                        <% users.forEach(function(u) { %>
+                                                            <option value="<%= u.id %>" <%= String(t.created_by) === String(u.id) ? 'selected' : '' %>><%= u.username %></option>
+                                                        <% }) %>
                                                     </select>
                                                     <button type="submit"
-                                                        style="padding:0.5rem 1rem; background:#667eea; color:white; border:none; border-radius:6px; cursor:pointer;">Güncelle</button>
+                                                        style="padding:0.4rem 0.6rem; background:#10b981; color:white; border:none; border-radius:6px; cursor:pointer; font-size:0.85rem; margin-top:0.25rem;">Kaydet</button>
                                                 </form>
-                                                <% if (role==='yonetici' ) { %>
-                                                    <form method="POST"
-                                                        action="/tebligat/<%= t.id %>/delete?<%= new URLSearchParams(filters).toString() %>"
+                                            <% } else { %>
+                                                <div class="adliye-note-preview" style="margin-top:0;">
+                                                    <%= (t.createdByUser && t.createdByUser.username) || '-' %>
+                                                </div>
+                                            <% } %>
+                                        </td>
+                                        <td>
+                                            <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
+                                                <form method="POST" action="/tebligat/<%= t.id %>/update-status?<%= filterQuery %>"
+                                                    class="scroll-form"
+                                                    style="display:flex; gap:0.5rem; align-items:center; flex:1; min-width:220px;">
+                                                    <select name="durum"
+                                                        style="padding:0.5rem; border-radius:6px; border:1px solid #e0e0e0; flex:1;">
+                                                        <option value="gönderildi" <%= t.durum === 'gönderildi' ? 'selected' : '' %>>Gonderildi</option>
+                                                        <option value="itiraz" <%= t.durum === 'itiraz' ? 'selected' : '' %>>Itiraz</option>
+                                                        <option value="tebliğ" <%= t.durum === 'tebliğ' ? 'selected' : '' %>>Kesinlesti</option>
+                                                        <option value="iade" <%= t.durum === 'iade' ? 'selected' : '' %>>Iade</option>
+                                                    </select>
+                                                    <button type="submit"
+                                                        style="padding:0.5rem 1rem; background:#667eea; color:white; border:none; border-radius:6px; cursor:pointer;">Guncelle</button>
+                                                </form>
+                                                <% if (role === 'yonetici') { %>
+                                                    <form method="POST" action="/tebligat/<%= t.id %>/delete?<%= filterQuery %>"
                                                         class="scroll-form" style="margin:0;">
                                                         <button type="submit"
-                                                            onclick="return confirm('Bu tebligatı silmek istediğinizden emin misiniz?')"
+                                                            onclick="return confirm('Bu tebligati silmek istediginizden emin misiniz?')"
                                                             style="padding:0.5rem 0.75rem; background:#ef4444; color:white; border:none; border-radius:6px; cursor:pointer;"
-                                                            title="Sil">🗑️</button>
+                                                            title="Sil">Sil</button>
                                                     </form>
-                                                    <% } %>
+                                                <% } %>
                                             </div>
                                         </td>
                                     </tr>
-                                    <% }) %>
+                                <% }) %>
                             </tbody>
                         </table>
                     </div>
-                    <% } else { %>
-                        <div class="empty-state">
-                            <div class="empty-state-icon">📚</div>
-                            <p>Tebligat bulunamadı</p>
-                        </div>
-                        <% } %>
+                <% } else { %>
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📚</div>
+                        <p>Tebligat bulunamadi</p>
+                    </div>
+                <% } %>
             </section>
         </main>
     </div>
     <script>
+        function toggleTebligatPanel(type, id) {
+            const element = document.getElementById('tebligat-' + type + '-' + id);
+            if (!element) return;
+            element.style.display = element.style.display === 'none' ? 'block' : 'none';
+        }
+
         window.__scrollLockConfig = {
             storageKey: 'scroll-lock:/tebligatlar',
             formSelector: 'form.scroll-form'
